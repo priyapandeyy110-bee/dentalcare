@@ -22,8 +22,18 @@ services:
         fromDatabase:
           name: dental-db
           property: connectionString
-      # Set in the Render dashboard (marked sync:false so it is never committed).
+      # All sync:false -- Render asks for these at blueprint creation and they
+      # are never stored in this file. Leave GEMINI_API_KEY blank to run on the
+      # built-in rule engine instead.
       - key: GEMINI_API_KEY
+        sync: false
+      # The first administrator, created by build.sh because the free plan has
+      # no Shell tab. Leave blank to skip.
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
         sync: false
 
 databases:
