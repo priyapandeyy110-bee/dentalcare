@@ -1,6 +1,6 @@
 """The single entry point every view uses for AI features.
 
-Each function tries the Claude API first and silently falls back to the
+Each function tries the Gemini API first and silently falls back to the
 rule engine if the API is unconfigured or fails, so the feature always
 returns something usable. Every call is written to AIQueryLog.
 """
@@ -11,20 +11,20 @@ import logging
 
 from django.utils import timezone
 
-from . import claude_provider as claude
+from . import gemini_provider as gemini
 from . import rule_engine
-from .claude_provider import AIProviderError, Result
+from .gemini_provider import AIProviderError, Result
 
 logger = logging.getLogger(__name__)
 
 
 def ai_is_live() -> bool:
-    """True when answers come from the Claude API rather than the rule engine."""
-    return claude.is_configured()
+    """True when answers come from the Gemini API rather than the rule engine."""
+    return gemini.is_configured()
 
 
 def provider_label() -> str:
-    return "Claude (%s)" % claude.settings.AI_MODEL if ai_is_live() else "Built-in dental engine"
+    return "Gemini (%s)" % gemini.settings.AI_MODEL if ai_is_live() else "Built-in dental engine"
 
 
 def _log(user, feature, result, prompt_excerpt="", error=""):
@@ -132,11 +132,11 @@ def chat(user, message: str, history=None, patient=None) -> Result:
 
     if ai_is_live():
         try:
-            result = claude.chat(message, history=history, context_block=context_block)
+            result = gemini.chat(message, history=history, context_block=context_block)
             _log(user, "chat", result, prompt_excerpt=message)
             return result
         except AIProviderError as exc:
-            logger.warning("Claude chat failed, using rule engine: %s", exc)
+            logger.warning("Gemini chat failed, using rule engine: %s", exc)
             _log(user, "chat", None, prompt_excerpt=message, error=str(exc))
 
     rule_context = {
@@ -164,14 +164,14 @@ def analyze_symptoms(user, payload: dict, patient=None) -> Result:
             enriched["symptom_labels"] = _symptom_labels(payload.get("symptoms"))
             enriched["duration_label"] = _duration_label(payload.get("duration"))
             context_block = build_patient_context(patient) if patient else ""
-            result = claude.analyze_symptoms(enriched, context_block=context_block)
+            result = gemini.analyze_symptoms(enriched, context_block=context_block)
             data = _validate_symptom_payload(result.content)
-            data["provider"] = claude.PROVIDER_NAME
+            data["provider"] = gemini.PROVIDER_NAME
             result.content = data
             _log(user, "symptom", result, prompt_excerpt=str(payload.get("symptoms")))
             return result
         except AIProviderError as exc:
-            logger.warning("Claude symptom analysis failed, using rule engine: %s", exc)
+            logger.warning("Gemini symptom analysis failed, using rule engine: %s", exc)
             _log(user, "symptom", None, error=str(exc))
 
     data = rule_engine.analyze_symptoms(payload)
@@ -184,14 +184,14 @@ def build_care_plan(user, patient) -> Result:
     """Generate a personalized preventive-care plan. Never raises."""
     if ai_is_live():
         try:
-            result = claude.build_care_plan(build_patient_context(patient))
+            result = gemini.build_care_plan(build_patient_context(patient))
             data = _validate_care_plan_payload(result.content)
-            data["provider"] = claude.PROVIDER_NAME
+            data["provider"] = gemini.PROVIDER_NAME
             result.content = data
             _log(user, "care_plan", result, prompt_excerpt=patient.patient_code)
             return result
         except AIProviderError as exc:
-            logger.warning("Claude care plan failed, using rule engine: %s", exc)
+            logger.warning("Gemini care plan failed, using rule engine: %s", exc)
             _log(user, "care_plan", None, error=str(exc))
 
     data = rule_engine.build_care_plan(_profile_dict(patient))
@@ -211,11 +211,11 @@ def clinical_summary(user, patient, appointment=None) -> Result:
 
     if ai_is_live():
         try:
-            result = claude.clinical_summary(context_block)
+            result = gemini.clinical_summary(context_block)
             _log(user, "clinical_summary", result, prompt_excerpt=patient.patient_code)
             return result
         except AIProviderError as exc:
-            logger.warning("Claude clinical summary failed, using rule engine: %s", exc)
+            logger.warning("Gemini clinical summary failed, using rule engine: %s", exc)
             _log(user, "clinical_summary", None, error=str(exc))
 
     latest = patient.symptom_analyses.first()

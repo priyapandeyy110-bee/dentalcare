@@ -1,4 +1,4 @@
-"""The AI layer: rule engine, Claude provider, fallback behaviour and the views."""
+"""The AI layer: rule engine, Gemini provider, fallback behaviour and the views."""
 
 import json
 from unittest import mock
@@ -8,7 +8,7 @@ from django.urls import reverse
 
 from aiassistant.models import AIMessage, AIQueryLog, CarePlan, SymptomAnalysis
 from aiassistant.services import assistant, rule_engine
-from aiassistant.services.claude_provider import AIProviderError, Result
+from aiassistant.services.gemini_provider import AIProviderError, Result
 
 pytestmark = pytest.mark.django_db
 
@@ -151,28 +151,28 @@ def test_every_ai_call_is_logged(patient):
     assert log.succeeded
 
 
-def test_claude_is_used_when_configured(patient, settings):
-    settings.ANTHROPIC_API_KEY = "sk-ant-test"
+def test_gemini_is_used_when_configured(patient, settings):
+    settings.GEMINI_API_KEY = "test-key"
     settings.AI_ENABLED = True
 
-    fake = Result("Cold sensitivity is common.", provider="claude", model="claude-opus-5")
-    with mock.patch("aiassistant.services.claude_provider.is_configured", return_value=True), \
-         mock.patch("aiassistant.services.claude_provider.chat", return_value=fake) as call:
+    fake = Result("Cold sensitivity is common.", provider="gemini", model="gemini-3.6-flash")
+    with mock.patch("aiassistant.services.gemini_provider.is_configured", return_value=True), \
+         mock.patch("aiassistant.services.gemini_provider.chat", return_value=fake) as call:
         result = assistant.chat(patient.user, "Why are my teeth sensitive?")
 
     assert call.called
-    assert result.provider == "claude"
+    assert result.provider == "gemini"
     assert not result.is_fallback
 
 
 def test_api_failure_falls_back_to_the_rule_engine(patient, settings):
     """An API outage must never break the feature."""
-    settings.ANTHROPIC_API_KEY = "sk-ant-test"
+    settings.GEMINI_API_KEY = "test-key"
     settings.AI_ENABLED = True
 
-    with mock.patch("aiassistant.services.claude_provider.is_configured", return_value=True), \
+    with mock.patch("aiassistant.services.gemini_provider.is_configured", return_value=True), \
          mock.patch(
-             "aiassistant.services.claude_provider.chat",
+             "aiassistant.services.gemini_provider.chat",
              side_effect=AIProviderError("network down"),
          ):
         result = assistant.chat(patient.user, "Why are my teeth sensitive?")
@@ -185,12 +185,12 @@ def test_api_failure_falls_back_to_the_rule_engine(patient, settings):
 
 
 def test_symptom_analysis_falls_back_on_bad_model_output(patient, settings):
-    settings.ANTHROPIC_API_KEY = "sk-ant-test"
+    settings.GEMINI_API_KEY = "test-key"
     settings.AI_ENABLED = True
 
-    bad = Result({"urgency": "NOT_A_LEVEL", "summary": ""}, provider="claude")
-    with mock.patch("aiassistant.services.claude_provider.is_configured", return_value=True), \
-         mock.patch("aiassistant.services.claude_provider.analyze_symptoms", return_value=bad):
+    bad = Result({"urgency": "NOT_A_LEVEL", "summary": ""}, provider="gemini")
+    with mock.patch("aiassistant.services.gemini_provider.is_configured", return_value=True), \
+         mock.patch("aiassistant.services.gemini_provider.analyze_symptoms", return_value=bad):
         result = assistant.analyze_symptoms(
             patient.user,
             {"symptoms": ["tooth_pain"], "description": "", "pain_level": 5,

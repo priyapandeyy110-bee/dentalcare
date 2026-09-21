@@ -23,7 +23,7 @@ services:
           name: dental-db
           property: connectionString
       # Set in the Render dashboard (marked sync:false so it is never committed).
-      - key: ANTHROPIC_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
 
 databases:

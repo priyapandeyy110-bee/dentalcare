@@ -18,7 +18,7 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Never call the real API from tests.
-ANTHROPIC_API_KEY = ""
+GEMINI_API_KEY = ""
 AI_ENABLED = False
 
 DATABASES = {

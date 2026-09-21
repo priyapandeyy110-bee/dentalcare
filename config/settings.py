@@ -186,12 +186,15 @@ CLINIC_ADDRESS = os.environ.get("CLINIC_ADDRESS", "12 MG Road, Pune, Maharashtra
 CLINIC_EMERGENCY_NUMBER = os.environ.get("CLINIC_EMERGENCY_NUMBER", "+91 98765 43211")
 
 # --- AI assistant ------------------------------------------------------------
-# When ANTHROPIC_API_KEY is absent the system automatically falls back to the
+# When GEMINI_API_KEY is absent the system automatically falls back to the
 # bundled rule-based engine, so every AI feature stays usable offline.
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-AI_MODEL = os.environ.get("AI_MODEL", "claude-opus-5")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+AI_MODEL = os.environ.get("AI_MODEL", "gemini-3.6-flash")
 AI_MAX_TOKENS = int(os.environ.get("AI_MAX_TOKENS", "2000"))
 AI_EFFORT = os.environ.get("AI_EFFORT", "low")
+# Gemini thinking tokens. Blank derives the budget from AI_EFFORT; set an
+# explicit integer to override (0 disables thinking, -1 lets the model decide).
+AI_THINKING_BUDGET = os.environ.get("AI_THINKING_BUDGET", "")
 AI_TIMEOUT_SECONDS = float(os.environ.get("AI_TIMEOUT_SECONDS", "60"))
 AI_ENABLED = env_bool("AI_ENABLED", True)
 AI_HISTORY_TURNS = int(os.environ.get("AI_HISTORY_TURNS", "12"))

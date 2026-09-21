@@ -3,7 +3,7 @@ djangorestframework==3.18.0
 dj-database-url==3.1.2
 python-dotenv==1.2.3
 whitenoise==6.12.0
-anthropic==1.7.0
+google-genai==2.24.0
 
 # Production server + PostgreSQL driver (used on Render)
 gunicorn==23.0.0

@@ -1,6 +1,6 @@
-"""Claude API provider for the dental assistant.
+"""Gemini API provider for the dental assistant.
 
-Uses the official ``anthropic`` SDK. Every method raises ``AIProviderError``
+Uses the official ``google-genai`` SDK. Every method raises ``AIProviderError``
 on failure so the caller can fall back to the rule engine -- the application
 must never break because the AI is unreachable.
 """
@@ -15,7 +15,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-PROVIDER_NAME = "claude"
+PROVIDER_NAME = "gemini"
 
 
 class AIProviderError(RuntimeError):
@@ -23,12 +23,17 @@ class AIProviderError(RuntimeError):
 
 
 try:  # The SDK is optional -- the app runs fully without it.
-    import anthropic
+    from google import genai
+    from google.genai import errors as genai_errors
+    from google.genai import types as genai_types
 except ImportError:  # pragma: no cover - exercised only in minimal installs
-    anthropic = None
+    genai = None
+    genai_errors = None
+    genai_types = None
 
 
-# The system prompt is frozen so it stays a stable, cacheable prefix.
+# The system prompt is frozen so it stays a stable prefix that Gemini's
+# implicit context caching can reuse across calls.
 CHAT_SYSTEM_PROMPT = """You are the dental assistant for a dental clinic management system.
 
 Your role:
@@ -142,9 +147,29 @@ CARE_PLAN_SCHEMA = {
     "additionalProperties": False,
 }
 
+# Dental triage legitimately discusses bleeding, swelling and severe pain, which
+# the default DANGEROUS_CONTENT filter can read as self-harm. Silently blocking a
+# triage answer is worse than answering it, so only high-confidence hits block.
+_SAFETY_CATEGORIES = (
+    "HARM_CATEGORY_HARASSMENT",
+    "HARM_CATEGORY_HATE_SPEECH",
+    "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+    "HARM_CATEGORY_DANGEROUS_CONTENT",
+)
+
+# Gemini 3 models think by default. 0 turns thinking off, -1 lets the model decide.
+_EFFORT_THINKING_BUDGET = {
+    "none": 0,
+    "minimal": 0,
+    "low": 0,
+    "medium": -1,
+    "high": -1,
+    "max": -1,
+}
+
 
 def is_configured() -> bool:
-    return bool(settings.AI_ENABLED and settings.ANTHROPIC_API_KEY and anthropic is not None)
+    return bool(settings.AI_ENABLED and settings.GEMINI_API_KEY and genai is not None)
 
 
 _client = None
@@ -153,12 +178,13 @@ _client = None
 def get_client():
     global _client
     if not is_configured():
-        raise AIProviderError("Claude API is not configured.")
+        raise AIProviderError("Gemini API is not configured.")
     if _client is None:
-        _client = anthropic.Anthropic(
-            api_key=settings.ANTHROPIC_API_KEY,
-            timeout=settings.AI_TIMEOUT_SECONDS,
-            max_retries=2,
+        _client = genai.Client(
+            api_key=settings.GEMINI_API_KEY,
+            http_options=genai_types.HttpOptions(
+                timeout=int(settings.AI_TIMEOUT_SECONDS * 1000),  # milliseconds
+            ),
         )
     return _client
 
@@ -177,69 +203,124 @@ class Result:
         self.is_fallback = is_fallback
 
 
+def _thinking_budget() -> int:
+    override = getattr(settings, "AI_THINKING_BUDGET", "")
+    if str(override).strip():
+        try:
+            return int(override)
+        except (TypeError, ValueError):
+            logger.warning("Ignoring non-numeric AI_THINKING_BUDGET=%r", override)
+    return _EFFORT_THINKING_BUDGET.get(str(settings.AI_EFFORT).lower(), 0)
+
+
 def _usage(response):
-    usage = getattr(response, "usage", None)
-    return (
-        getattr(usage, "input_tokens", 0) or 0,
-        getattr(usage, "output_tokens", 0) or 0,
+    usage = getattr(response, "usage_metadata", None)
+    if usage is None:
+        return 0, 0
+    # Thinking tokens are billed as output, so they belong in the output count.
+    output = (getattr(usage, "candidates_token_count", 0) or 0) + (
+        getattr(usage, "thoughts_token_count", 0) or 0
     )
+    return getattr(usage, "prompt_token_count", 0) or 0, output
 
 
 def _text_of(response) -> str:
-    parts = [block.text for block in response.content if block.type == "text"]
-    text = "\n".join(p for p in parts if p).strip()
+    text = (response.text or "").strip()
     if not text:
-        raise AIProviderError("Claude returned an empty response.")
+        raise AIProviderError("Gemini returned an empty response.")
     return text
 
 
+def _check_blocked(response):
+    """Translate a filtered or truncated response into the fallback path."""
+    feedback = getattr(response, "prompt_feedback", None)
+    if feedback is not None and getattr(feedback, "block_reason", None):
+        raise AIProviderError("Gemini blocked the prompt (%s)." % feedback.block_reason)
+
+    candidates = getattr(response, "candidates", None) or []
+    if not candidates:
+        raise AIProviderError("Gemini returned no candidates.")
+
+    finish = str(getattr(candidates[0], "finish_reason", "") or "")
+    if "SAFETY" in finish:
+        raise AIProviderError("Gemini blocked the answer as unsafe.")
+    if "RECITATION" in finish:
+        raise AIProviderError("Gemini stopped the answer for recitation.")
+    if "MAX_TOKENS" in finish:
+        # Structured output would be truncated mid-JSON, so never use it.
+        raise AIProviderError("Gemini hit the output token limit.")
+
+
+def _contents(messages):
+    """Map our user/assistant history onto Gemini's user/model roles."""
+    out = []
+    for turn in messages:
+        role = "model" if turn["role"] == "assistant" else "user"
+        out.append(
+            genai_types.Content(
+                role=role, parts=[genai_types.Part(text=turn["content"])]
+            )
+        )
+    return out
+
+
 def _call(*, system, messages, max_tokens=None, output_schema=None):
-    """One Messages API call with uniform error translation."""
+    """One generate_content call with uniform error translation."""
     client = get_client()
     started = time.monotonic()
-    kwargs = {
-        "model": settings.AI_MODEL,
-        "max_tokens": max_tokens or settings.AI_MAX_TOKENS,
-        # Frozen system prompt first, so the cache prefix stays stable.
-        "system": [
-            {"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}
+
+    config_kwargs = {
+        "system_instruction": system,
+        "max_output_tokens": max_tokens or settings.AI_MAX_TOKENS,
+        "thinking_config": genai_types.ThinkingConfig(
+            thinking_budget=_thinking_budget()
+        ),
+        "safety_settings": [
+            genai_types.SafetySetting(category=category, threshold="BLOCK_ONLY_HIGH")
+            for category in _SAFETY_CATEGORIES
         ],
-        "messages": messages,
-        "output_config": {"effort": settings.AI_EFFORT},
+        # We never expose tools; disabling this also silences the SDK's AFC warning.
+        "automatic_function_calling": genai_types.AutomaticFunctionCallingConfig(
+            disable=True
+        ),
     }
     if output_schema is not None:
-        kwargs["output_config"]["format"] = {
-            "type": "json_schema",
-            "schema": output_schema,
-        }
+        config_kwargs["response_mime_type"] = "application/json"
+        config_kwargs["response_json_schema"] = output_schema
 
     try:
-        response = client.messages.create(**kwargs)
-    except anthropic.BadRequestError as exc:
-        raise AIProviderError("Invalid request to Claude: %s" % exc) from exc
-    except anthropic.AuthenticationError as exc:
-        raise AIProviderError("Claude API key is invalid.") from exc
-    except anthropic.PermissionDeniedError as exc:
-        raise AIProviderError("Claude API key lacks permission for this model.") from exc
-    except anthropic.NotFoundError as exc:
-        raise AIProviderError("Model %s not found." % settings.AI_MODEL) from exc
-    except anthropic.RateLimitError as exc:
-        raise AIProviderError("Claude rate limit reached -- try again shortly.") from exc
-    except anthropic.APIStatusError as exc:
-        raise AIProviderError("Claude API error (%s)." % exc.status_code) from exc
-    except anthropic.APIConnectionError as exc:
-        raise AIProviderError("Could not reach the Claude API.") from exc
+        response = client.models.generate_content(
+            model=settings.AI_MODEL,
+            contents=_contents(messages),
+            config=genai_types.GenerateContentConfig(**config_kwargs),
+        )
+    except genai_errors.ClientError as exc:
+        code = getattr(exc, "code", None)
+        if code == 400:
+            raise AIProviderError("Invalid request to Gemini: %s" % exc) from exc
+        if code in (401, 403):
+            raise AIProviderError("Gemini API key is invalid or lacks access.") from exc
+        if code == 404:
+            raise AIProviderError("Model %s not found." % settings.AI_MODEL) from exc
+        if code == 429:
+            raise AIProviderError("Gemini rate limit reached -- try again shortly.") from exc
+        raise AIProviderError("Gemini API error (%s)." % code) from exc
+    except genai_errors.ServerError as exc:
+        raise AIProviderError(
+            "Gemini is unavailable (%s)." % getattr(exc, "code", "5xx")
+        ) from exc
+    except genai_errors.APIError as exc:
+        raise AIProviderError("Gemini API error: %s" % exc) from exc
     except Exception as exc:  # defensive: never let the request 500
         raise AIProviderError("Unexpected AI error: %s" % exc) from exc
 
-    if response.stop_reason == "refusal":
-        raise AIProviderError("The model declined to answer this request.")
+    _check_blocked(response)
 
     latency_ms = int((time.monotonic() - started) * 1000)
     input_tokens, output_tokens = _usage(response)
     return response, Result(
         None,
-        model=response.model,
+        model=getattr(response, "model_version", "") or settings.AI_MODEL,
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         latency_ms=latency_ms,
@@ -254,7 +335,7 @@ def chat(message: str, history=None, context_block: str = "") -> Result:
 
     user_content = message
     if context_block:
-        # Volatile per-patient context goes after the cached system prefix.
+        # Volatile per-patient context goes after the stable system prefix.
         user_content = "%s\n\n---\nContext about this user (do not repeat verbatim):\n%s" % (
             message,
             context_block,
@@ -321,7 +402,7 @@ def _parse_json(text: str) -> dict:
     try:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise AIProviderError("Claude returned malformed JSON.") from exc
+        raise AIProviderError("Gemini returned malformed JSON.") from exc
     if not isinstance(data, dict):
-        raise AIProviderError("Claude returned JSON that was not an object.")
+        raise AIProviderError("Gemini returned JSON that was not an object.")
     return data

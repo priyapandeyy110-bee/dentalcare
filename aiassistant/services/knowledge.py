@@ -1,5 +1,5 @@
 """Curated dental knowledge used by the offline rule engine and as grounding
-context for the Claude prompts.
+context for the Gemini prompts.
 
 Everything here is general patient education -- the kind of information a
 clinic would print on a leaflet. It is deliberately conservative: it never

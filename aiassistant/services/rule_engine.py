@@ -1,4 +1,4 @@
-"""Deterministic dental assistant used when the Claude API is unavailable.
+"""Deterministic dental assistant used when the Gemini API is unavailable.
 
 This is a real, working engine -- not a stub. It answers FAQs by keyword
 match, triages symptoms with an explicit scoring model, and builds care plans
