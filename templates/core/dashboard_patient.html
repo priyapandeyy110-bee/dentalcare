@@ -16,7 +16,7 @@
       {% endif %}
     </div>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex gap-2 page-actions">
     <a href="{% url 'appointments:book' %}" class="btn btn-primary">
       <i class="bi bi-calendar-plus me-1"></i> Book appointment
     </a>
@@ -156,31 +156,31 @@
         <a href="{% url 'appointments:list' %}" class="small">View all</a>
       </div>
       <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
+        <table class="table table-hover mb-0 align-middle table-stack">
           <thead><tr>
             <th>When</th><th>Dentist</th><th>Reason</th><th>Status</th><th></th>
           </tr></thead>
           <tbody>
             {% for appointment in upcoming_appointments %}
               <tr class="table-light">
-                <td>{{ appointment.scheduled_for|date:"d M Y, g:i A" }}</td>
-                <td>{{ appointment.dentist.display_name }}</td>
-                <td>{{ appointment.get_reason_display }}</td>
-                <td><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
-                <td class="text-end"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+                <td data-label="When">{{ appointment.scheduled_for|date:"d M Y, g:i A" }}</td>
+                <td data-label="Dentist">{{ appointment.dentist.display_name }}</td>
+                <td data-label="Reason">{{ appointment.get_reason_display }}</td>
+                <td data-label="Status"><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
+                <td class="text-end stack-actions"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
               </tr>
             {% endfor %}
             {% for appointment in past_appointments %}
               <tr>
-                <td class="text-body-secondary">{{ appointment.scheduled_for|date:"d M Y, g:i A" }}</td>
-                <td>{{ appointment.dentist.display_name }}</td>
-                <td>{{ appointment.get_reason_display }}</td>
-                <td><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
-                <td class="text-end"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+                <td class="text-body-secondary" data-label="When">{{ appointment.scheduled_for|date:"d M Y, g:i A" }}</td>
+                <td data-label="Dentist">{{ appointment.dentist.display_name }}</td>
+                <td data-label="Reason">{{ appointment.get_reason_display }}</td>
+                <td data-label="Status"><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
+                <td class="text-end stack-actions"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
               </tr>
             {% empty %}
               {% if not upcoming_appointments %}
-                <tr><td colspan="5" class="text-center text-body-secondary py-4">No appointments yet.</td></tr>
+                <tr class="stack-plain"><td colspan="5" class="text-center text-body-secondary py-4">No appointments yet.</td></tr>
               {% endif %}
             {% endfor %}
           </tbody>

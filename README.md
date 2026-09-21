@@ -125,6 +125,16 @@ status (Unpaid → Partial → Paid), printable invoice, overpayment rejected.
 **Notifications** — in-app for booking, confirmation, cancellation, treatment,
 prescription, invoice and payment; email for reminders.
 
+**Mobile** — the whole application works on a phone. Data tables do not scroll
+sideways: below 768px each row becomes a labelled card, driven by a `data-label`
+on every cell and the `table-stack` / `table-form-stack` classes in
+`static/css/app.css`. Notifications stay outside the collapsed menu so they are
+one tap away, header actions become full-width buttons, tab strips scroll,
+form inputs render at 16px so iOS does not zoom on focus, and the chat composer
+sticks above the keyboard. The phone rules are scoped to `@media screen`, so
+printed invoices and prescriptions keep their tabular layout. A set of tests
+fails if a new table is added without the stacking markup.
+
 ---
 
 ## Reminders
@@ -155,11 +165,12 @@ schtasks /create /tn "Dental reminders" /tr "C:\path\to\python.exe C:\path\to\ma
 python -m pytest
 ```
 
-150 tests covering booking rules (slot generation, double-booking, leave,
+168 tests covering booking rules (slot generation, double-booking, leave,
 rescheduling, minimum notice), billing arithmetic and payment states, clinical
 record workflow, role permissions for all three roles, the AI rule engine's
 triage decisions, the Gemini request/response handling, and the fallback path
-when the API fails. Tests never call the real API.
+when the API fails, plus the mobile layout guards described below. Tests
+never call the real API.
 
 Every page is also covered by a render test for each role that may open it.
 

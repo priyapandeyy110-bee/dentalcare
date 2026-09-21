@@ -28,7 +28,7 @@
   </div>
 
   <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
+    <table class="table table-hover mb-0 align-middle table-stack">
       <thead><tr>
         <th>When</th>
         {% if not is_patient_role %}<th>Patient</th>{% endif %}
@@ -37,9 +37,9 @@
       <tbody>
         {% for analysis in page_obj %}
           <tr>
-            <td class="small">{{ analysis.created_at|date:"d M Y, g:i A" }}</td>
+            <td class="small" data-label="When">{{ analysis.created_at|date:"d M Y, g:i A" }}</td>
             {% if not is_patient_role %}
-              <td>
+              <td data-label="Patient">
                 {% if analysis.patient %}
                   <a href="{% url 'accounts:patient_detail' analysis.patient.pk %}" class="text-decoration-none">
                     {{ analysis.user.display_name }}
@@ -47,20 +47,20 @@
                 {% else %}{{ analysis.user.display_name }}{% endif %}
               </td>
             {% endif %}
-            <td class="small">{{ analysis.symptom_labels|join:", "|default:"Free text"|truncatechars:60 }}</td>
-            <td>{{ analysis.pain_level }}/10</td>
-            <td><span class="badge bg-{{ analysis.urgency_css }}-subtle text-{{ analysis.urgency_css }}-emphasis">{{ analysis.urgency }}</span></td>
-            <td>
+            <td class="small" data-label="Symptoms">{{ analysis.symptom_labels|join:", "|default:"Free text"|truncatechars:60 }}</td>
+            <td data-label="Pain">{{ analysis.pain_level }}/10</td>
+            <td data-label="Urgency"><span class="badge bg-{{ analysis.urgency_css }}-subtle text-{{ analysis.urgency_css }}-emphasis">{{ analysis.urgency }}</span></td>
+            <td data-label="Reviewed">
               {% if analysis.reviewed_by_dentist %}
                 <i class="bi bi-check-circle text-success"></i>
               {% else %}
                 <i class="bi bi-dash-circle text-body-secondary"></i>
               {% endif %}
             </td>
-            <td class="text-end"><a href="{% url 'aiassistant:symptom_detail' analysis.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+            <td class="text-end stack-actions"><a href="{% url 'aiassistant:symptom_detail' analysis.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
           </tr>
         {% empty %}
-          <tr><td colspan="7">{% include "partials/empty_state.html" with icon="bi-clipboard2" message="No symptom checks recorded." %}</td></tr>
+          <tr class="stack-plain"><td colspan="7">{% include "partials/empty_state.html" with icon="bi-clipboard2" message="No symptom checks recorded." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -348,6 +348,392 @@ a:hover { color: var(--dental-primary-dark); }
   font-size: 1.35rem;
 }
 
+/* --- Responsive: tablet (<= 991px) --------------------------------------- */
+
+@media screen and (max-width: 991.98px) {
+  /* A long nav menu must scroll rather than push the page down. */
+  .app-navbar .navbar-collapse {
+    max-height: 78vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 0.5rem;
+  }
+
+  .app-navbar .navbar-nav .nav-link {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+
+  /* Inline dropdowns inside the collapsed menu, tinted to match the navbar. */
+  .app-navbar .navbar-collapse .dropdown-menu {
+    background: rgba(255, 255, 255, 0.08);
+    border: 0;
+    box-shadow: none;
+    margin: 0 0 0.25rem 1rem;
+    padding-left: 0.25rem;
+  }
+
+  .app-navbar .navbar-collapse .dropdown-item {
+    color: rgba(255, 255, 255, 0.85);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .app-navbar .navbar-collapse .dropdown-item:hover,
+  .app-navbar .navbar-collapse .dropdown-item:focus {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+  }
+
+  .app-navbar .navbar-collapse .dropdown-header {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .app-navbar .navbar-collapse hr.dropdown-divider {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@media screen and (max-width: 575.98px) {
+  /* Keep the brand on one line so it never pushes the controls off-screen. */
+  .navbar-brand-text {
+    display: inline-block;
+    max-width: 52vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    font-size: 0.98rem;
+  }
+}
+
+/* --- Responsive: phone (<= 767px) ---------------------------------------- */
+
+@media screen and (max-width: 767.98px) {
+  main {
+    padding-top: 1rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  h1, .h1 { font-size: 1.4rem; }
+  h2, .h2 { font-size: 1.25rem; }
+  .h4 { font-size: 1.2rem; }
+  .h5 { font-size: 1.05rem; }
+
+  .card { border-radius: 0.5rem; }
+
+  .card-body { padding: 0.9rem; }
+
+  /* Stat tiles: two per row, sized so long currency values still fit. */
+  .stat-card .stat-value {
+    font-size: 1.3rem;
+    overflow-wrap: anywhere;
+  }
+
+  .stat-card .stat-label { font-size: 0.68rem; }
+
+  .stat-card .stat-icon { display: none; }
+
+  .stat-card .card-body { padding: 0.75rem; }
+
+  /* Page headers: title, then full-width actions rather than a cramped row. */
+  .page-actions { width: 100%; }
+
+  .page-actions .btn { flex: 1 1 auto; }
+
+  .page-actions .dropdown { flex: 1 1 auto; }
+
+  .page-actions .dropdown .btn { width: 100%; }
+
+  /* Comfortable tap targets. */
+  .btn { min-height: 40px; }
+
+  .btn-sm {
+    min-height: 36px;
+    padding-inline: 0.7rem;
+  }
+
+  .list-group-item {
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
+
+  /* iOS zooms the page when a focused input is under 16px. */
+  .form-control,
+  .form-select,
+  .form-control-sm,
+  .form-select-sm {
+    font-size: 16px;
+  }
+
+  /* Filter bars stack instead of squeezing into columns. */
+  .card-header form .row > [class*="col-"] {
+    margin-bottom: 0.5rem;
+  }
+
+  .card-header form .row > [class*="col-"]:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Tab strips scroll sideways instead of wrapping into a tall block. */
+  .nav-tabs,
+  .nav-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-tabs::-webkit-scrollbar,
+  .nav-pills::-webkit-scrollbar { display: none; }
+
+  .nav-tabs .nav-link,
+  .nav-pills .nav-link { white-space: nowrap; }
+
+  /* A group of filter buttons wraps instead of overflowing. */
+  .btn-group-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .btn-group-wrap .btn {
+    flex: 1 1 auto;
+    border-radius: 0.375rem !important;
+  }
+
+  .slot-grid {
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  }
+
+  .avatar-initials.avatar-lg {
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
+  }
+
+  .timeline-item { padding-left: 1.6rem; }
+
+  .urgency-banner { padding: 0.85rem; }
+
+  .urgency-banner .fs-2 { font-size: 1.5rem !important; }
+
+  dl.row dt { margin-bottom: 0.1rem; }
+
+  dl.row dd { margin-bottom: 0.7rem; }
+}
+
+/* --- Stacked tables ------------------------------------------------------ */
+/*
+   Data tables are unreadable at phone width even with horizontal scroll, so
+   each row becomes a small card and every cell carries its own label. Add
+   `table-stack` to the table and `data-label="..."` to each cell; the header
+   row is hidden. Cells with no data-label (actions, empty states) render full
+   width with no label.
+*/
+
+@media screen and (max-width: 767.98px) {
+  .table-stack,
+  .table-stack tbody,
+  .table-stack tr,
+  .table-stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-stack thead { display: none; }
+
+  .table-stack > tbody > tr {
+    border: 1px solid rgba(20, 89, 92, 0.16);
+    border-radius: 0.55rem;
+    background: #fff;
+    padding: 0.35rem 0.8rem;
+    margin-bottom: 0.7rem;
+    box-shadow: 0 1px 2px rgba(20, 89, 92, 0.05);
+  }
+
+  .table-stack > tbody > tr:last-child { margin-bottom: 0; }
+
+  .table-stack > tbody > tr > td {
+    border: 0;
+    border-bottom: 1px solid #eef4f4;
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    text-align: right;
+  }
+
+  .table-stack > tbody > tr > td:last-child { border-bottom: 0; }
+
+  .table-stack > tbody > tr > td::before {
+    content: attr(data-label);
+    flex: 0 0 38%;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #63767a;
+  }
+
+  /* Cells without a label take the full width (actions, empty states). */
+  .table-stack > tbody > tr > td:not([data-label])::before { content: none; }
+
+  .table-stack > tbody > tr > td:not([data-label]) { text-align: left; }
+
+  /* The action cell becomes a row of equal-width buttons. */
+  .table-stack td.stack-actions {
+    display: flex;
+    gap: 0.4rem;
+    padding-top: 0.65rem;
+  }
+
+  .table-stack td.stack-actions .btn { flex: 1 1 auto; }
+
+  .table-stack td.stack-actions form { flex: 1 1 auto; display: flex; }
+
+  .table-stack td.stack-actions form .btn { width: 100%; }
+
+  /* A single full-width cell -- empty states, "nothing booked" rows. */
+  .table-stack > tbody > tr.stack-plain {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .table-stack > tbody > tr.stack-plain > td {
+    border: 0;
+    text-align: center;
+    display: block;
+  }
+
+  /* Totals rows on an invoice keep their label/value pairing. */
+  .table-stack > tfoot {
+    display: block;
+    margin-top: 0.5rem;
+  }
+
+  .table-stack > tfoot > tr {
+    display: block;
+    border-top: 1px solid #dfe9e9;
+    padding: 0.15rem 0.8rem;
+  }
+
+  .table-stack > tfoot > tr > td {
+    display: flex;
+    justify-content: space-between;
+    border: 0;
+    padding: 0.3rem 0;
+    text-align: right;
+  }
+
+  .table-stack > tfoot > tr > td[colspan] { display: none; }
+
+  .table-stack > tfoot > tr > td[data-label] { display: flex; }
+
+  .table-stack > tfoot > tr > td[data-label]::before {
+    content: attr(data-label);
+    text-align: left;
+    color: #63767a;
+    font-weight: 600;
+  }
+
+  /* An editable formset row reads as a labelled block, not a table row. */
+  .table-form-stack,
+  .table-form-stack tbody,
+  .table-form-stack tr,
+  .table-form-stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-form-stack thead { display: none; }
+
+  .table-form-stack > tbody > tr {
+    border: 1px solid rgba(20, 89, 92, 0.16);
+    border-radius: 0.55rem;
+    padding: 0.75rem;
+    margin-bottom: 0.85rem;
+    background: #fbfdfd;
+  }
+
+  .table-form-stack > tbody > tr > td {
+    border: 0;
+    padding: 0.3rem 0;
+  }
+
+  .table-form-stack > tbody > tr > td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #63767a;
+    margin-bottom: 0.2rem;
+  }
+
+  .table-form-stack > tbody > tr > td:not([data-label])::before { content: none; }
+}
+
+/* --- Chat on a phone ------------------------------------------------------ */
+
+@media screen and (max-width: 767.98px) {
+  .chat-window {
+    height: calc(100dvh - 320px);
+    min-height: 240px;
+    padding: 0.75rem;
+    border-radius: 0.4rem;
+  }
+
+  .chat-bubble {
+    max-width: 92%;
+    padding: 0.6rem 0.8rem;
+  }
+
+  /* Keep the composer reachable above the on-screen keyboard. */
+  #chatForm {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding-top: 0.5rem;
+    z-index: 5;
+  }
+
+  .chat-quick-links {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 0.4rem;
+  }
+
+  .chat-quick-links::-webkit-scrollbar { display: none; }
+
+  .chat-quick-links .btn {
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+}
+
+/* --- Very small phones (<= 400px) ---------------------------------------- */
+
+@media screen and (max-width: 400px) {
+  .stat-card .stat-value { font-size: 1.15rem; }
+
+  .table-stack > tbody > tr > td::before { flex-basis: 45%; }
+
+  .slot-grid {
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  }
+
+  .hero { padding: 3rem 0 2.5rem; }
+}
+
 /* --- Print --------------------------------------------------------------- */
 
 @media print {

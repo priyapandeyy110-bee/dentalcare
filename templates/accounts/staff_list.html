@@ -11,26 +11,26 @@
 
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
+    <table class="table table-hover mb-0 align-middle table-stack">
       <thead><tr>
         <th>Name</th><th>Username</th><th>Role</th><th>Contact</th><th>Profile</th><th>Status</th><th></th>
       </tr></thead>
       <tbody>
         {% for member in staff_members %}
           <tr>
-            <td>
+            <td data-label="Name">
               <div class="d-flex align-items-center gap-2">
                 <span class="avatar-initials avatar-muted">{{ member.initials }}</span>
                 <span class="fw-semibold">{{ member.display_name }}</span>
               </div>
             </td>
-            <td class="small font-monospace">{{ member.username }}</td>
-            <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ member.get_role_display }}</span></td>
-            <td class="small">
+            <td class="small font-monospace" data-label="Username">{{ member.username }}</td>
+            <td data-label="Role"><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ member.get_role_display }}</span></td>
+            <td class="small" data-label="Contact">
               {{ member.phone|default:"--" }}
               <div class="text-body-secondary">{{ member.email }}</div>
             </td>
-            <td class="small">
+            <td class="small" data-label="Profile">
               {% if member.role == "DENTIST" %}
                 {% if member.dentist_profile %}
                   <a href="{% url 'accounts:dentist_detail' member.dentist_profile.pk %}">
@@ -45,14 +45,14 @@
                 <span class="text-body-secondary">--</span>
               {% endif %}
             </td>
-            <td>
+            <td data-label="Status">
               {% if member.is_active %}
                 <span class="badge bg-success-subtle text-success-emphasis">Active</span>
               {% else %}
                 <span class="badge bg-secondary-subtle text-secondary-emphasis">Deactivated</span>
               {% endif %}
             </td>
-            <td class="text-end text-nowrap">
+            <td class="text-end text-nowrap stack-actions">
               {% if member.role == "DENTIST" %}
                 <a href="{% url 'accounts:dentist_profile_edit' member.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
               {% endif %}
@@ -68,7 +68,7 @@
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7">
+          <tr class="stack-plain"><td colspan="7">
             {% include "partials/empty_state.html" with icon="bi-person-badge" message="No staff accounts yet." %}
           </td></tr>
         {% endfor %}

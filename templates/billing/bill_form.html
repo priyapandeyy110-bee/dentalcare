@@ -23,7 +23,7 @@
             </div>
           {% endif %}
           <div class="table-responsive">
-            <table class="table table-sm align-middle">
+            <table class="table table-sm align-middle table-form-stack">
               <thead><tr>
                 <th style="width:55%">Description</th>
                 <th style="width:15%">Quantity</th>
@@ -34,10 +34,10 @@
                 {% for item_form in formset %}
                   <tr>
                     {{ item_form.id }}
-                    <td>{{ item_form.description }}{% for e in item_form.description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
-                    <td>{{ item_form.quantity }}</td>
-                    <td>{{ item_form.unit_price }}</td>
-                    <td class="text-center">{% if item_form.instance.pk %}{{ item_form.DELETE }}{% endif %}</td>
+                    <td data-label="Description">{{ item_form.description }}{% for e in item_form.description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                    <td data-label="Quantity">{{ item_form.quantity }}</td>
+                    <td data-label="Unit price">{{ item_form.unit_price }}</td>
+                    <td class="text-center" data-label="Remove">{% if item_form.instance.pk %}{{ item_form.DELETE }}{% endif %}</td>
                   </tr>
                 {% endfor %}
               </tbody>

@@ -26,7 +26,7 @@
   </div>
 
   <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
+    <table class="table table-hover mb-0 align-middle table-stack">
       <thead><tr>
         <th>Patient</th><th>Code</th><th>Contact</th><th>Alerts</th>
         <th class="text-end">Treatments</th><th>Last visit</th><th></th>
@@ -34,7 +34,7 @@
       <tbody>
         {% for patient in page_obj %}
           <tr>
-            <td>
+            <td data-label="Patient">
               <div class="d-flex align-items-center gap-2">
                 <span class="avatar-initials avatar-muted">{{ patient.user.initials }}</span>
                 <div>
@@ -47,26 +47,26 @@
                 </div>
               </div>
             </td>
-            <td class="small font-monospace">{{ patient.patient_code }}</td>
-            <td class="small">
+            <td class="small font-monospace" data-label="Code">{{ patient.patient_code }}</td>
+            <td class="small" data-label="Contact">
               {{ patient.user.phone|default:"--" }}
               <div class="text-body-secondary">{{ patient.user.email|default:"" }}</div>
             </td>
-            <td>
+            <td data-label="Alerts">
               {% for flag in patient.risk_flags %}
                 <span class="badge bg-warning-subtle text-warning-emphasis">{{ flag }}</span>
               {% empty %}
                 <span class="text-body-secondary small">--</span>
               {% endfor %}
             </td>
-            <td class="text-end small">{{ patient.treatment_count }}</td>
-            <td class="small">{{ patient.last_dental_visit|date:"d M Y"|default:"--" }}</td>
-            <td class="text-end">
+            <td class="text-end small" data-label="Treatments">{{ patient.treatment_count }}</td>
+            <td class="small" data-label="Last visit">{{ patient.last_dental_visit|date:"d M Y"|default:"--" }}</td>
+            <td class="text-end stack-actions">
               <a href="{% url 'accounts:patient_detail' patient.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7">
+          <tr class="stack-plain"><td colspan="7">
             {% include "partials/empty_state.html" with icon="bi-people" message="No patients found." %}
           </td></tr>
         {% endfor %}

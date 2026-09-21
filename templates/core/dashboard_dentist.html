@@ -21,7 +21,7 @@
       {{ dentist.specialization }} &middot; {{ dentist.qualification }}
     </div>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex gap-2 page-actions">
     <a href="{% url 'appointments:schedule' %}" class="btn btn-primary"><i class="bi bi-calendar3 me-1"></i>My diary</a>
     <a href="{% url 'appointments:availability' %}" class="btn btn-outline-primary"><i class="bi bi-clock me-1"></i>Working hours</a>
   </div>
@@ -63,30 +63,30 @@
         <a href="{% url 'appointments:schedule' %}" class="small">Full day view</a>
       </div>
       <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
+        <table class="table table-hover mb-0 align-middle table-stack">
           <thead><tr><th>Time</th><th>Patient</th><th>Reason</th><th>Alerts</th><th></th></tr></thead>
           <tbody>
             {% for appointment in todays_appointments %}
               <tr>
-                <td class="fw-semibold">{{ appointment.scheduled_for|time:"g:i A" }}</td>
-                <td>
+                <td class="fw-semibold" data-label="Time">{{ appointment.scheduled_for|time:"g:i A" }}</td>
+                <td data-label="Patient">
                   <a href="{% url 'accounts:patient_detail' appointment.patient.pk %}" class="text-decoration-none">
                     {{ appointment.patient.user.display_name }}
                   </a>
                   <div class="small text-body-secondary">{{ appointment.patient.patient_code }}</div>
                 </td>
-                <td class="small">
+                <td class="small" data-label="Reason">
                   {{ appointment.get_reason_display }}
                   {% if appointment.symptoms %}
                     <div class="text-body-secondary">{{ appointment.symptoms|truncatewords:12 }}</div>
                   {% endif %}
                 </td>
-                <td>
+                <td data-label="Alerts">
                   {% for flag in appointment.patient.risk_flags %}
                     <span class="badge bg-warning-subtle text-warning-emphasis">{{ flag }}</span>
                   {% endfor %}
                 </td>
-                <td class="text-end text-nowrap">
+                <td class="text-end text-nowrap stack-actions">
                   <a href="{% url 'records:clinical_briefing' appointment.patient.pk %}?appointment={{ appointment.pk }}"
                      class="btn btn-sm btn-outline-info" title="AI pre-visit briefing">
                     <i class="bi bi-robot"></i>
@@ -96,7 +96,7 @@
                 </td>
               </tr>
             {% empty %}
-              <tr><td colspan="5" class="text-center text-body-secondary py-4">No patients booked today.</td></tr>
+              <tr class="stack-plain"><td colspan="5" class="text-center text-body-secondary py-4">No patients booked today.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -106,19 +106,19 @@
     <div class="card">
       <div class="card-header">Coming up</div>
       <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
+        <table class="table table-hover mb-0 align-middle table-stack">
           <thead><tr><th>When</th><th>Patient</th><th>Reason</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {% for appointment in upcoming_appointments %}
               <tr>
-                <td>{{ appointment.scheduled_for|date:"D d M, g:i A" }}</td>
-                <td>{{ appointment.patient.user.display_name }}</td>
-                <td class="small">{{ appointment.get_reason_display }}</td>
-                <td><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
-                <td class="text-end"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+                <td data-label="When">{{ appointment.scheduled_for|date:"D d M, g:i A" }}</td>
+                <td data-label="Patient">{{ appointment.patient.user.display_name }}</td>
+                <td class="small" data-label="Reason">{{ appointment.get_reason_display }}</td>
+                <td data-label="Status"><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
+                <td class="text-end stack-actions"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
               </tr>
             {% empty %}
-              <tr><td colspan="5" class="text-center text-body-secondary py-4">Nothing scheduled.</td></tr>
+              <tr class="stack-plain"><td colspan="5" class="text-center text-body-secondary py-4">Nothing scheduled.</td></tr>
             {% endfor %}
           </tbody>
         </table>

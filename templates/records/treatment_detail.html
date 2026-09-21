@@ -17,7 +17,7 @@
         </span>
       </div>
       {% if is_admin_role or is_dentist_role %}
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 page-actions">
           <a href="{% url 'records:treatment_edit' treatment.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
           <a href="{% url 'records:prescription_create' treatment.patient.pk %}?treatment={{ treatment.pk }}"
              class="btn btn-sm btn-outline-primary">Prescribe</a>

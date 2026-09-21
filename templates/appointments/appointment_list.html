@@ -40,7 +40,7 @@
   </div>
 
   <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
+    <table class="table table-hover mb-0 align-middle table-stack">
       <thead><tr>
         <th>Reference</th><th>When</th>
         {% if not is_patient_role %}<th>Patient</th>{% endif %}
@@ -49,27 +49,27 @@
       <tbody>
         {% for appointment in page_obj %}
           <tr>
-            <td class="small font-monospace">{{ appointment.reference }}</td>
-            <td>
+            <td class="small font-monospace" data-label="Reference">{{ appointment.reference }}</td>
+            <td data-label="When">
               {{ appointment.scheduled_for|date:"d M Y" }}
               <div class="small text-body-secondary">{{ appointment.scheduled_for|time:"g:i A" }}</div>
             </td>
             {% if not is_patient_role %}
-              <td>
+              <td data-label="Patient">
                 <a href="{% url 'accounts:patient_detail' appointment.patient.pk %}" class="text-decoration-none">
                   {{ appointment.patient.user.display_name }}
                 </a>
                 <div class="small text-body-secondary">{{ appointment.patient.patient_code }}</div>
               </td>
             {% endif %}
-            <td class="small">{{ appointment.dentist.display_name }}</td>
-            <td class="small">{{ appointment.get_reason_display }}</td>
-            <td>
+            <td class="small" data-label="Dentist">{{ appointment.dentist.display_name }}</td>
+            <td class="small" data-label="Reason">{{ appointment.get_reason_display }}</td>
+            <td data-label="Status">
               <span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">
                 {{ appointment.get_status_display }}
               </span>
             </td>
-            <td class="text-end text-nowrap">
+            <td class="text-end text-nowrap stack-actions">
               <a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
               {% if appointment.is_editable %}
                 <a href="{% url 'appointments:reschedule' appointment.pk %}" class="btn btn-sm btn-outline-primary" title="Reschedule">
@@ -79,7 +79,7 @@
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7">
+          <tr class="stack-plain"><td colspan="7">
             {% include "partials/empty_state.html" with icon="bi-calendar-x" message="No appointments match these filters." %}
           </td></tr>
         {% endfor %}

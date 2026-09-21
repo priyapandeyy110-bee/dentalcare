@@ -50,7 +50,7 @@
 
         <div class="display-6 mb-2">&#8478;</div>
 
-        <table class="table table-sm">
+        <table class="table table-sm table-stack">
           <thead><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr></thead>
           <tbody>
             {% for item in prescription.items.all %}
@@ -59,9 +59,9 @@
                   <strong>{{ item.medicine_name }}</strong>
                   {% if item.instructions %}<div class="small text-body-secondary">{{ item.instructions }}</div>{% endif %}
                 </td>
-                <td>{{ item.dosage }}</td>
-                <td>{{ item.frequency }}</td>
-                <td>{{ item.duration }}</td>
+                <td data-label="Dosage">{{ item.dosage }}</td>
+                <td data-label="Frequency">{{ item.frequency }}</td>
+                <td data-label="Duration">{{ item.duration }}</td>
               </tr>
             {% endfor %}
           </tbody>

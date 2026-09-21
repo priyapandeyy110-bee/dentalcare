@@ -11,7 +11,7 @@
       {% if start %}From {{ start|date:"d M Y" }} to today{% else %}All time{% endif %}
     </div>
   </div>
-  <div class="btn-group">
+  <div class="btn-group btn-group-wrap">
     <a href="?period=week" class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">7 days</a>
     <a href="?period=month" class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">30 days</a>
     <a href="?period=year" class="btn btn-sm {% if period == 'year' %}btn-primary{% else %}btn-outline-primary{% endif %}">1 year</a>
@@ -88,17 +88,17 @@
     <div class="card h-100">
       <div class="card-header">Treatments by procedure</div>
       <div class="table-responsive">
-        <table class="table table-sm mb-0">
+        <table class="table table-sm mb-0 table-stack">
           <thead><tr><th>Procedure</th><th class="text-end">Count</th><th class="text-end">Value</th></tr></thead>
           <tbody>
             {% for row in procedure_breakdown %}
               <tr>
-                <td class="small">{{ row.label }}</td>
-                <td class="text-end">{{ row.count }}</td>
-                <td class="text-end small">{{ row.revenue|currency }}</td>
+                <td class="small" data-label="Procedure">{{ row.label }}</td>
+                <td class="text-end" data-label="Count">{{ row.count }}</td>
+                <td class="text-end small" data-label="Value">{{ row.revenue|currency }}</td>
               </tr>
             {% empty %}
-              <tr><td colspan="3" class="text-center text-body-secondary py-3">No treatments in this period.</td></tr>
+              <tr class="stack-plain"><td colspan="3" class="text-center text-body-secondary py-3">No treatments in this period.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -151,7 +151,7 @@
     <div class="card h-100">
       <div class="card-header">Dentist workload</div>
       <div class="table-responsive">
-        <table class="table table-sm mb-0">
+        <table class="table table-sm mb-0 table-stack">
           <thead><tr>
             <th>Dentist</th><th>Specialization</th>
             <th class="text-end">Appointments</th><th class="text-end">Completed</th>
@@ -160,14 +160,14 @@
           <tbody>
             {% for dentist in dentist_performance %}
               <tr>
-                <td class="small">{{ dentist.display_name }}</td>
-                <td class="small text-body-secondary">{{ dentist.specialization }}</td>
-                <td class="text-end">{{ dentist.appointment_count }}</td>
-                <td class="text-end">{{ dentist.completed }}</td>
-                <td class="text-end">{{ dentist.treatment_count }}</td>
+                <td class="small" data-label="Dentist">{{ dentist.display_name }}</td>
+                <td class="small text-body-secondary" data-label="Specialization">{{ dentist.specialization }}</td>
+                <td class="text-end" data-label="Appointments">{{ dentist.appointment_count }}</td>
+                <td class="text-end" data-label="Completed">{{ dentist.completed }}</td>
+                <td class="text-end" data-label="Treatments">{{ dentist.treatment_count }}</td>
               </tr>
             {% empty %}
-              <tr><td colspan="5" class="text-center text-body-secondary py-3">No dentists on record.</td></tr>
+              <tr class="stack-plain"><td colspan="5" class="text-center text-body-secondary py-3">No dentists on record.</td></tr>
             {% endfor %}
           </tbody>
         </table>

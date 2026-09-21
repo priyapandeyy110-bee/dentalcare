@@ -19,7 +19,7 @@
   {% endif %}
 
   <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
+    <table class="table table-hover mb-0 align-middle table-stack">
       <thead><tr>
         <th>Date</th>
         {% if not is_patient_role %}<th>Patient</th>{% endif %}
@@ -29,30 +29,30 @@
       <tbody>
         {% for treatment in page_obj %}
           <tr>
-            <td class="small text-nowrap">{{ treatment.treatment_date|date:"d M Y" }}</td>
+            <td class="small text-nowrap" data-label="Date">{{ treatment.treatment_date|date:"d M Y" }}</td>
             {% if not is_patient_role %}
-              <td>
+              <td data-label="Patient">
                 <a href="{% url 'accounts:patient_detail' treatment.patient.pk %}" class="text-decoration-none">
                   {{ treatment.patient.user.display_name }}
                 </a>
                 <div class="small text-body-secondary">{{ treatment.patient.patient_code }}</div>
               </td>
             {% endif %}
-            <td class="small">{{ treatment.get_procedure_display }}</td>
-            <td class="small">{{ treatment.diagnosis|truncatewords:12 }}</td>
-            <td class="small">{{ treatment.dentist.display_name }}</td>
-            <td class="text-end small">{{ treatment.cost|currency }}</td>
-            <td>
+            <td class="small" data-label="Procedure">{{ treatment.get_procedure_display }}</td>
+            <td class="small" data-label="Diagnosis">{{ treatment.diagnosis|truncatewords:12 }}</td>
+            <td class="small" data-label="Dentist">{{ treatment.dentist.display_name }}</td>
+            <td class="text-end small" data-label="Cost">{{ treatment.cost|currency }}</td>
+            <td data-label="Status">
               <span class="badge bg-{{ treatment.status_css }}-subtle text-{{ treatment.status_css }}-emphasis">
                 {{ treatment.get_status_display }}
               </span>
             </td>
-            <td class="text-end">
+            <td class="text-end stack-actions">
               <a href="{% url 'records:treatment_detail' treatment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="8">
+          <tr class="stack-plain"><td colspan="8">
             {% include "partials/empty_state.html" with icon="bi-clipboard2-pulse" message="No treatment records found." %}
           </td></tr>
         {% endfor %}

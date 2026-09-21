@@ -40,7 +40,7 @@
           {% endif %}
 
           <div class="table-responsive">
-            <table class="table table-sm align-middle">
+            <table class="table table-sm align-middle table-form-stack">
               <thead><tr>
                 <th style="width:24%">Medicine</th>
                 <th style="width:14%">Dosage</th>
@@ -53,12 +53,12 @@
                 {% for item_form in formset %}
                   <tr>
                     {{ item_form.id }}
-                    <td>{{ item_form.medicine_name }}{% for e in item_form.medicine_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
-                    <td>{{ item_form.dosage }}</td>
-                    <td>{{ item_form.frequency }}</td>
-                    <td>{{ item_form.duration }}</td>
-                    <td>{{ item_form.instructions }}</td>
-                    <td class="text-center">{% if item_form.instance.pk %}{{ item_form.DELETE }}{% endif %}</td>
+                    <td data-label="Medicine">{{ item_form.medicine_name }}{% for e in item_form.medicine_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                    <td data-label="Dosage">{{ item_form.dosage }}</td>
+                    <td data-label="Frequency">{{ item_form.frequency }}</td>
+                    <td data-label="Duration">{{ item_form.duration }}</td>
+                    <td data-label="Instructions">{{ item_form.instructions }}</td>
+                    <td class="text-center" data-label="Remove">{% if item_form.instance.pk %}{{ item_form.DELETE }}{% endif %}</td>
                   </tr>
                 {% endfor %}
               </tbody>

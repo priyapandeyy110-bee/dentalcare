@@ -24,15 +24,18 @@
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <a href="?dentist={{ dentist.pk }}&date={{ prev_day|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
-    <i class="bi bi-chevron-left"></i> Previous day
+  <a href="?dentist={{ dentist.pk }}&date={{ prev_day|date:'Y-m-d' }}"
+     class="btn btn-sm btn-outline-secondary text-nowrap" aria-label="Previous day">
+    <i class="bi bi-chevron-left"></i><span class="d-none d-sm-inline"> Previous day</span>
   </a>
-  <div class="fw-semibold">
-    {{ schedule.day|date:"l, d F Y" }}
+  <div class="fw-semibold text-center px-2">
+    <span class="d-none d-sm-inline">{{ schedule.day|date:"l, d F Y" }}</span>
+    <span class="d-sm-none">{{ schedule.day|date:"D, d M Y" }}</span>
     {% if schedule.day == today %}<span class="badge bg-primary ms-1">Today</span>{% endif %}
   </div>
-  <a href="?dentist={{ dentist.pk }}&date={{ next_day|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
-    Next day <i class="bi bi-chevron-right"></i>
+  <a href="?dentist={{ dentist.pk }}&date={{ next_day|date:'Y-m-d' }}"
+     class="btn btn-sm btn-outline-secondary text-nowrap" aria-label="Next day">
+    <span class="d-none d-sm-inline">Next day </span><i class="bi bi-chevron-right"></i>
   </a>
 </div>
 
@@ -50,13 +53,13 @@
         Booked appointments ({{ schedule.appointments|length }})
       </div>
       <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
+        <table class="table table-hover mb-0 align-middle table-stack">
           <thead><tr><th>Time</th><th>Patient</th><th>Reason</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {% for appointment in schedule.appointments %}
               <tr>
-                <td class="fw-semibold text-nowrap">{{ appointment.scheduled_for|time:"g:i A" }}</td>
-                <td>
+                <td class="fw-semibold text-nowrap" data-label="Time">{{ appointment.scheduled_for|time:"g:i A" }}</td>
+                <td data-label="Patient">
                   <a href="{% url 'accounts:patient_detail' appointment.patient.pk %}" class="text-decoration-none">
                     {{ appointment.patient.user.display_name }}
                   </a>
@@ -65,25 +68,25 @@
                     <span class="badge bg-warning-subtle text-warning-emphasis">{{ flag }}</span>
                   {% endfor %}
                 </td>
-                <td class="small">
+                <td class="small" data-label="Reason">
                   {{ appointment.get_reason_display }}
                   {% if appointment.symptoms %}
                     <div class="text-body-secondary">{{ appointment.symptoms|truncatewords:12 }}</div>
                   {% endif %}
                 </td>
-                <td>
+                <td data-label="Status">
                   <span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">
                     {{ appointment.get_status_display }}
                   </span>
                 </td>
-                <td class="text-end text-nowrap">
+                <td class="text-end text-nowrap stack-actions">
                   <a href="{% url 'records:clinical_briefing' appointment.patient.pk %}?appointment={{ appointment.pk }}"
                      class="btn btn-sm btn-outline-info" title="AI briefing"><i class="bi bi-robot"></i></a>
                   <a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
                 </td>
               </tr>
             {% empty %}
-              <tr><td colspan="5" class="text-center text-body-secondary py-4">Nothing booked on this day.</td></tr>
+              <tr class="stack-plain"><td colspan="5" class="text-center text-body-secondary py-4">Nothing booked on this day.</td></tr>
             {% endfor %}
           </tbody>
         </table>

@@ -23,7 +23,7 @@
   </div>
 
   {% if is_admin_role or is_dentist_role %}
-    <div class="d-flex flex-wrap gap-2">
+    <div class="d-flex flex-wrap gap-2 page-actions">
       <a href="{% url 'records:clinical_briefing' patient.pk %}" class="btn btn-outline-info">
         <i class="bi bi-robot me-1"></i>AI briefing
       </a>
@@ -114,19 +114,19 @@
       </div>
 
       <div class="tab-pane fade" id="tab-appointments">
-        <table class="table table-sm table-hover mb-0 align-middle">
+        <table class="table table-sm table-hover mb-0 align-middle table-stack">
           <thead><tr><th>When</th><th>Dentist</th><th>Reason</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {% for appointment in appointments %}
               <tr>
-                <td class="small">{{ appointment.scheduled_for|date:"d M Y, g:i A" }}</td>
-                <td class="small">{{ appointment.dentist.display_name }}</td>
-                <td class="small">{{ appointment.get_reason_display }}</td>
-                <td><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
-                <td class="text-end"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+                <td class="small" data-label="When">{{ appointment.scheduled_for|date:"d M Y, g:i A" }}</td>
+                <td class="small" data-label="Dentist">{{ appointment.dentist.display_name }}</td>
+                <td class="small" data-label="Reason">{{ appointment.get_reason_display }}</td>
+                <td data-label="Status"><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
+                <td class="text-end stack-actions"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
               </tr>
             {% empty %}
-              <tr><td colspan="5" class="text-center text-body-secondary py-4">No appointments.</td></tr>
+              <tr class="stack-plain"><td colspan="5" class="text-center text-body-secondary py-4">No appointments.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -153,20 +153,20 @@
       </div>
 
       <div class="tab-pane fade" id="tab-bills">
-        <table class="table table-sm table-hover mb-0 align-middle">
+        <table class="table table-sm table-hover mb-0 align-middle table-stack">
           <thead><tr><th>Invoice</th><th>Date</th><th class="text-end">Total</th><th class="text-end">Due</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {% for bill in bills %}
               <tr>
-                <td class="small font-monospace">{{ bill.invoice_number }}</td>
-                <td class="small">{{ bill.issued_on|date:"d M Y" }}</td>
-                <td class="text-end">{{ bill.total|currency }}</td>
-                <td class="text-end">{{ bill.balance_due|currency }}</td>
-                <td><span class="badge bg-{{ bill.status_css }}-subtle text-{{ bill.status_css }}-emphasis">{{ bill.get_status_display }}</span></td>
-                <td class="text-end"><a href="{% url 'billing:detail' bill.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+                <td class="small font-monospace" data-label="Invoice">{{ bill.invoice_number }}</td>
+                <td class="small" data-label="Date">{{ bill.issued_on|date:"d M Y" }}</td>
+                <td class="text-end" data-label="Total">{{ bill.total|currency }}</td>
+                <td class="text-end" data-label="Due">{{ bill.balance_due|currency }}</td>
+                <td data-label="Status"><span class="badge bg-{{ bill.status_css }}-subtle text-{{ bill.status_css }}-emphasis">{{ bill.get_status_display }}</span></td>
+                <td class="text-end stack-actions"><a href="{% url 'billing:detail' bill.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
               </tr>
             {% empty %}
-              <tr><td colspan="6" class="text-center text-body-secondary py-4">No invoices.</td></tr>
+              <tr class="stack-plain"><td colspan="6" class="text-center text-body-secondary py-4">No invoices.</td></tr>
             {% endfor %}
           </tbody>
         </table>
