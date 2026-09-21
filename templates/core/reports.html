@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+
+{% block title %}Reports -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-0">Clinic reports</h1>
+    <div class="small text-body-secondary">
+      {% if start %}From {{ start|date:"d M Y" }} to today{% else %}All time{% endif %}
+    </div>
+  </div>
+  <div class="btn-group">
+    <a href="?period=week" class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">7 days</a>
+    <a href="?period=month" class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">30 days</a>
+    <a href="?period=year" class="btn btn-sm {% if period == 'year' %}btn-primary{% else %}btn-outline-primary{% endif %}">1 year</a>
+    <a href="?period=all" class="btn btn-sm {% if period == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">All time</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card"><div class="card-body">
+      <div class="stat-label">Appointments</div>
+      <div class="stat-value">{{ totals.appointments }}</div>
+      <div class="small text-body-secondary">{{ completion_rate }}% completed</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card stat-success"><div class="card-body">
+      <div class="stat-label">Revenue collected</div>
+      <div class="stat-value">{{ totals.revenue|currency }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card stat-info"><div class="card-body">
+      <div class="stat-label">Treatments</div>
+      <div class="stat-value">{{ totals.treatments }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card stat-warning"><div class="card-body">
+      <div class="stat-label">New patients</div>
+      <div class="stat-value">{{ totals.new_patients }}</div>
+      <div class="small text-body-secondary">{{ totals.ai_calls }} AI interactions</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">Appointments by status</div>
+      <div class="card-body">
+        {% for row in status_breakdown %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small mb-1">
+              <span>{{ row.label }}</span>
+              <span class="fw-semibold">{{ row.count }} ({{ row.count|percent_of:totals.appointments }}%)</span>
+            </div>
+            <div class="progress" style="height:8px">
+              <div class="progress-bar" style="width: {{ row.count|percent_of:totals.appointments }}%"></div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-body-secondary mb-0">No appointments in this period.</p>
+        {% endfor %}
+        <div class="row text-center small border-top pt-3">
+          <div class="col-4">
+            <div class="fw-bold text-success">{{ totals.completed }}</div>
+            <div class="text-body-secondary">Completed</div>
+          </div>
+          <div class="col-4">
+            <div class="fw-bold text-secondary">{{ totals.cancelled }}</div>
+            <div class="text-body-secondary">Cancelled</div>
+          </div>
+          <div class="col-4">
+            <div class="fw-bold text-danger">{{ totals.no_show }}</div>
+            <div class="text-body-secondary">No shows</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">Treatments by procedure</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Procedure</th><th class="text-end">Count</th><th class="text-end">Value</th></tr></thead>
+          <tbody>
+            {% for row in procedure_breakdown %}
+              <tr>
+                <td class="small">{{ row.label }}</td>
+                <td class="text-end">{{ row.count }}</td>
+                <td class="text-end small">{{ row.revenue|currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="text-center text-body-secondary py-3">No treatments in this period.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">Why patients booked</div>
+      <div class="card-body">
+        {% for row in reason_breakdown %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small mb-1">
+              <span>{{ row.label }}</span><span>{{ row.count }}</span>
+            </div>
+            <div class="progress" style="height:6px">
+              <div class="progress-bar bg-info" style="width: {{ row.count|percent_of:totals.appointments }}%"></div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-body-secondary mb-0">No data for this period.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-robot me-1"></i>AI triage outcomes</div>
+      <div class="card-body">
+        {% for row in triage_breakdown %}
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="small">{{ row.label }}</span>
+            <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ row.count }}</span>
+          </div>
+        {% empty %}
+          <p class="text-body-secondary mb-0">
+            No symptom checks submitted in this period.
+          </p>
+        {% endfor %}
+        <p class="small text-body-secondary mb-0 mt-3">
+          Shows how the AI symptom checker classified patient submissions.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header">Dentist workload</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr>
+            <th>Dentist</th><th>Specialization</th>
+            <th class="text-end">Appointments</th><th class="text-end">Completed</th>
+            <th class="text-end">Treatments</th>
+          </tr></thead>
+          <tbody>
+            {% for dentist in dentist_performance %}
+              <tr>
+                <td class="small">{{ dentist.display_name }}</td>
+                <td class="small text-body-secondary">{{ dentist.specialization }}</td>
+                <td class="text-end">{{ dentist.appointment_count }}</td>
+                <td class="text-end">{{ dentist.completed }}</td>
+                <td class="text-end">{{ dentist.treatment_count }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-body-secondary py-3">No dentists on record.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header">Revenue by month</div>
+      <div class="card-body">
+        {% for row in revenue_by_month %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small mb-1">
+              <span>{{ row.month|date:"M Y" }}</span>
+              <span class="fw-semibold">{{ row.total|currency }}</span>
+            </div>
+            <div class="progress" style="height:8px">
+              <div class="progress-bar bg-success" style="width: {{ row.total|percent_of:max_revenue }}%"></div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-body-secondary mb-0">No payments recorded in this period.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="text-center mt-4 no-print">
+  <button onclick="window.print()" class="btn btn-outline-secondary">
+    <i class="bi bi-printer me-1"></i>Print this report
+  </button>
+</div>
+{% endblock %}

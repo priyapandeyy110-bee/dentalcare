@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+{% block title %}Patients -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h4 mb-0">Patients</h1>
+  {% if is_admin_role %}
+    <a href="{% url 'accounts:patient_create' %}" class="btn btn-primary">
+      <i class="bi bi-person-plus me-1"></i>Register patient
+    </a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2">
+      <div class="col-md-9">
+        <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm"
+               placeholder="Search by name, patient code, phone or email">
+      </div>
+      <div class="col-md-3 d-grid">
+        <button class="btn btn-sm btn-outline-primary">Search</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead><tr>
+        <th>Patient</th><th>Code</th><th>Contact</th><th>Alerts</th>
+        <th class="text-end">Treatments</th><th>Last visit</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for patient in page_obj %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span class="avatar-initials avatar-muted">{{ patient.user.initials }}</span>
+                <div>
+                  <a href="{% url 'accounts:patient_detail' patient.pk %}" class="text-decoration-none fw-semibold">
+                    {{ patient.user.display_name }}
+                  </a>
+                  <div class="small text-body-secondary">
+                    {% if patient.user.age %}{{ patient.user.age }} yrs &middot; {% endif %}{{ patient.get_gender_display }}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="small font-monospace">{{ patient.patient_code }}</td>
+            <td class="small">
+              {{ patient.user.phone|default:"--" }}
+              <div class="text-body-secondary">{{ patient.user.email|default:"" }}</div>
+            </td>
+            <td>
+              {% for flag in patient.risk_flags %}
+                <span class="badge bg-warning-subtle text-warning-emphasis">{{ flag }}</span>
+              {% empty %}
+                <span class="text-body-secondary small">--</span>
+              {% endfor %}
+            </td>
+            <td class="text-end small">{{ patient.treatment_count }}</td>
+            <td class="small">{{ patient.last_dental_visit|date:"d M Y"|default:"--" }}</td>
+            <td class="text-end">
+              <a href="{% url 'accounts:patient_detail' patient.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">
+            {% include "partials/empty_state.html" with icon="bi-people" message="No patients found." %}
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{% include "partials/pagination.html" %}</div>
+</div>
+{% endblock %}

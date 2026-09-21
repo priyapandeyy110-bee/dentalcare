@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ CLINIC_NAME }} -- AI-powered dental care{% endblock %}
+{% block main_class %}{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg app-navbar">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'core:home' %}">
+      <i class="bi bi-hospital"></i> {{ CLINIC_NAME }}
+    </a>
+    <div class="ms-auto d-flex gap-2">
+      <a href="{% url 'aiassistant:faq' %}" class="btn btn-sm btn-outline-light">Dental FAQ</a>
+      <a href="{% url 'accounts:login' %}" class="btn btn-sm btn-outline-light">Sign in</a>
+      <a href="{% url 'accounts:signup' %}" class="btn btn-sm btn-light text-primary fw-semibold">Register</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <span class="badge bg-light text-dark mb-3">
+          <i class="bi bi-robot"></i>
+          AI assistant {% if ai_live %}powered by Claude{% else %}ready{% endif %}
+        </span>
+        <h1 class="display-5 fw-bold mb-3">Smart dental care, from booking to follow-up</h1>
+        <p class="lead mb-4">
+          Book appointments online, keep your dental history in one place, and ask our
+          AI assistant about symptoms and oral care at any hour. Your dentist still
+          makes every clinical decision -- the assistant just helps you get there sooner.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'accounts:signup' %}" class="btn btn-light btn-lg text-primary fw-semibold">
+            <i class="bi bi-person-plus me-1"></i> Create a patient account
+          </a>
+          <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg">
+            Sign in
+          </a>
+        </div>
+        <p class="small mt-3 mb-0">
+          <i class="bi bi-telephone"></i> {{ CLINIC_PHONE }}
+          &nbsp;&middot;&nbsp;
+          <i class="bi bi-geo-alt"></i> {{ CLINIC_ADDRESS }}
+        </p>
+      </div>
+      <div class="col-lg-5">
+        <div class="card text-body shadow-lg">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <span class="avatar-initials avatar-muted"><i class="bi bi-robot"></i></span>
+              <div>
+                <div class="fw-semibold">Dental assistant</div>
+                <div class="small text-body-secondary">Available 24/7</div>
+              </div>
+            </div>
+            <div class="chat-bubble user mb-2">Pain when I drink cold water.</div>
+            <div class="chat-bubble assistant">
+              Cold sensitivity has several common causes -- exposed roots, worn enamel,
+              or a cracked filling. A desensitising toothpaste often helps, but sharp
+              pain that lingers should be examined.
+              <div class="small text-body-secondary mt-2">
+                <em>This is general information, not a diagnosis.</em>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 bg-white">
+  <div class="container">
+    <h2 class="h3 text-center mb-5">Everything the clinic needs, in one system</h2>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-icon mb-3"><i class="bi bi-calendar-check"></i></div>
+        <h3 class="h5">Online appointment booking</h3>
+        <p class="text-body-secondary">
+          See each dentist's genuinely free slots, book in seconds, and reschedule or
+          cancel yourself. Reminders go out before every visit.
+        </p>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-icon mb-3"><i class="bi bi-chat-dots"></i></div>
+        <h3 class="h5">AI dental assistant</h3>
+        <p class="text-body-secondary">
+          Ask about sensitivity, bleeding gums, whitening or aftercare and get a clear,
+          plain-English answer -- with a nudge to see a dentist when it matters.
+        </p>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-icon mb-3"><i class="bi bi-clipboard2-check"></i></div>
+        <h3 class="h5">Preliminary symptom check</h3>
+        <p class="text-body-secondary">
+          Describe what you feel and the system sorts it into possible areas of concern
+          and tells you how soon to be seen. Never a diagnosis -- always a dentist.
+        </p>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-icon mb-3"><i class="bi bi-file-medical"></i></div>
+        <h3 class="h5">Your full dental record</h3>
+        <p class="text-body-secondary">
+          Diagnoses, treatments, prescriptions and X-ray notes stay in one place, so
+          any dentist at the clinic can pick up where the last one left off.
+        </p>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-icon mb-3"><i class="bi bi-heart-pulse"></i></div>
+        <h3 class="h5">Personalized care plan</h3>
+        <p class="text-body-secondary">
+          A routine built around your own habits, medical history and recent treatment
+          -- not a generic leaflet.
+        </p>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-icon mb-3"><i class="bi bi-receipt"></i></div>
+        <h3 class="h5">Transparent billing</h3>
+        <p class="text-body-secondary">
+          Itemised invoices, payment history and outstanding balances, all visible
+          from your account and printable whenever you need them.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if dentists %}
+<section class="py-5">
+  <div class="container">
+    <h2 class="h3 text-center mb-5">Meet our dentists</h2>
+    <div class="row g-4">
+      {% for dentist in dentists %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100">
+            <div class="card-body d-flex gap-3">
+              <span class="avatar-initials avatar-lg">{{ dentist.user.initials }}</span>
+              <div>
+                <h3 class="h6 mb-1">{{ dentist.display_name }}</h3>
+                <div class="small text-body-secondary">{{ dentist.specialization }}</div>
+                <div class="small text-body-secondary">
+                  {{ dentist.qualification }} &middot; {{ dentist.experience_years }} yrs
+                </div>
+                <div class="small mt-2">
+                  Consultation: <strong>{{ dentist.consultation_fee }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="py-5 bg-white border-top">
+  <div class="container text-center">
+    <h2 class="h4 mb-3">Ready to book?</h2>
+    <p class="text-body-secondary mb-4">
+      Create an account in under a minute and book your first appointment today.
+    </p>
+    <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-lg">Register as a patient</a>
+  </div>
+</section>
+
+<footer class="py-4 text-center text-body-secondary small">
+  <div class="container">
+    {{ CLINIC_NAME }} &middot; {{ CLINIC_PHONE }} &middot; {{ CLINIC_ADDRESS }}
+    <br>
+    <span class="text-danger-emphasis">
+      Dental emergency? Call {{ CLINIC_EMERGENCY_NUMBER }}.
+    </span>
+  </div>
+</footer>
+{% endblock %}

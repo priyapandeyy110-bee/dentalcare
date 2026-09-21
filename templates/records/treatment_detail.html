@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+
+{% block title %}Treatment record -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h1 class="h4 mb-1">{{ treatment.get_procedure_display }}</h1>
+        <div class="text-body-secondary">
+          {{ treatment.treatment_date|date:"l, d F Y" }} &middot; {{ treatment.dentist.display_name }}
+        </div>
+        <span class="badge bg-{{ treatment.status_css }}-subtle text-{{ treatment.status_css }}-emphasis">
+          {{ treatment.get_status_display }}
+        </span>
+      </div>
+      {% if is_admin_role or is_dentist_role %}
+        <div class="d-flex gap-2">
+          <a href="{% url 'records:treatment_edit' treatment.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+          <a href="{% url 'records:prescription_create' treatment.patient.pk %}?treatment={{ treatment.pk }}"
+             class="btn btn-sm btn-outline-primary">Prescribe</a>
+          {% if is_admin_role %}
+            <a href="{% url 'billing:create' treatment.patient.pk %}?treatment={{ treatment.pk }}"
+               class="btn btn-sm btn-primary">Generate invoice</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3">Patient</dt>
+          <dd class="col-sm-9">
+            {% if is_admin_role or is_dentist_role %}
+              <a href="{% url 'accounts:patient_detail' treatment.patient.pk %}">
+                {{ treatment.patient.user.display_name }}
+              </a> ({{ treatment.patient.patient_code }})
+            {% else %}
+              {{ treatment.patient.user.display_name }}
+            {% endif %}
+          </dd>
+
+          {% if treatment.chief_complaint %}
+            <dt class="col-sm-3">Chief complaint</dt>
+            <dd class="col-sm-9">{{ treatment.chief_complaint }}</dd>
+          {% endif %}
+
+          <dt class="col-sm-3">Diagnosis</dt>
+          <dd class="col-sm-9">{{ treatment.diagnosis|linebreaksbr }}</dd>
+
+          <dt class="col-sm-3">Area treated</dt>
+          <dd class="col-sm-9">
+            {{ treatment.get_tooth_region_display }}
+            {% if treatment.tooth_numbers %}&middot; teeth {{ treatment.tooth_numbers }}{% endif %}
+          </dd>
+
+          {% if treatment.treatment_notes %}
+            <dt class="col-sm-3">Treatment notes</dt>
+            <dd class="col-sm-9">{{ treatment.treatment_notes|linebreaksbr }}</dd>
+          {% endif %}
+
+          <dt class="col-sm-3">Cost</dt>
+          <dd class="col-sm-9">{{ treatment.cost|currency }}</dd>
+
+          {% if treatment.appointment %}
+            <dt class="col-sm-3">Appointment</dt>
+            <dd class="col-sm-9">
+              <a href="{% url 'appointments:detail' treatment.appointment.pk %}">
+                {{ treatment.appointment.reference }}
+              </a>
+            </dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    {% if treatment.follow_up_date %}
+      <div class="card border-info mb-4">
+        <div class="card-header bg-info-subtle text-info-emphasis">
+          <i class="bi bi-arrow-repeat me-1"></i>Follow-up due {{ treatment.follow_up_date|date:"d M Y" }}
+        </div>
+        <div class="card-body">
+          <p class="mb-2">{{ treatment.follow_up_instructions|default:"Please book a follow-up appointment."|linebreaksbr }}</p>
+          {% if is_patient_role %}
+            <a href="{% url 'appointments:book' %}?reason=FOLLOW_UP&dentist={{ treatment.dentist.pk }}"
+               class="btn btn-sm btn-primary">Book the follow-up</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if prescriptions %}
+      <div class="card mb-4">
+        <div class="card-header">Prescriptions issued</div>
+        <ul class="list-group list-group-flush">
+          {% for prescription in prescriptions %}
+            <li class="list-group-item">
+              <a href="{% url 'records:prescription_detail' prescription.pk %}" class="fw-semibold text-decoration-none">
+                {{ prescription.issued_on|date:"d M Y" }}
+              </a>
+              <ul class="small mb-0 mt-1">
+                {% for item in prescription.items.all %}
+                  <li>{{ item.medicine_name }} {{ item.dosage }} -- {{ item.frequency }}, {{ item.duration }}</li>
+                {% endfor %}
+              </ul>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if bills %}
+      <div class="card">
+        <div class="card-header">Invoices</div>
+        <ul class="list-group list-group-flush">
+          {% for bill in bills %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="{% url 'billing:detail' bill.pk %}" class="text-decoration-none">{{ bill.invoice_number }}</a>
+              <span>
+                <span class="badge bg-{{ bill.status_css }}-subtle text-{{ bill.status_css }}-emphasis">{{ bill.get_status_display }}</span>
+                <strong class="ms-2">{{ bill.total|currency }}</strong>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

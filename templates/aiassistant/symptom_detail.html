@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+
+{% block title %}Symptom assessment -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h1 class="h4 mb-0">Your preliminary assessment</h1>
+      <div class="d-flex gap-2 align-items-center">
+        {% include "partials/ai_badge.html" with is_fallback=analysis.is_fallback %}
+        <span class="small text-body-secondary">{{ analysis.created_at|date:"d M Y, g:i A" }}</span>
+      </div>
+    </div>
+
+    <!-- Urgency -->
+    <div class="urgency-banner text-{{ analysis.urgency_css }}-emphasis bg-{{ analysis.urgency_css }}-subtle mb-4">
+      <div class="d-flex align-items-start gap-3">
+        <i class="bi {% if analysis.needs_immediate_care %}bi-exclamation-octagon{% else %}bi-check-circle{% endif %} fs-2"></i>
+        <div>
+          <div class="h5 mb-1">{{ analysis.get_urgency_display }}</div>
+          <div class="mb-0">
+            Recommended: <strong>{{ analysis.recommended_within }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if analysis.urgency == "EMERGENCY" %}
+      <div class="alert alert-danger">
+        <h2 class="h6"><i class="bi bi-telephone-fill me-1"></i>Call the clinic now</h2>
+        <p class="mb-0">
+          Emergency line: <strong>{{ emergency_number }}</strong>.
+          If you cannot reach us, go to your nearest emergency department.
+          Do not wait for an online booking.
+        </p>
+      </div>
+    {% endif %}
+
+    <!-- Summary -->
+    <div class="card ai-panel mb-4">
+      <div class="card-body">
+        <h2 class="h6 mb-2"><i class="bi bi-robot me-1"></i>What this means</h2>
+        <div>{{ analysis.summary|markdownish }}</div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-search me-1"></i>Possible areas of concern</div>
+          <div class="card-body">
+            <ul class="mb-2">
+              {% for area in analysis.possible_areas %}<li>{{ area }}</li>{% endfor %}
+            </ul>
+            <p class="small text-body-secondary mb-0">
+              These are possibilities to investigate, not a diagnosis. Only an
+              examination can tell which applies to you.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-bandaid me-1"></i>Until you are seen</div>
+          <div class="card-body">
+            <ul class="mb-0">
+              {% for advice in analysis.self_care_advice %}<li>{{ advice }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if analysis.red_flags %}
+      <div class="card border-danger mt-4">
+        <div class="card-header bg-danger-subtle text-danger-emphasis">
+          <i class="bi bi-flag-fill me-1"></i>Warning signs you reported
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            {% for flag in analysis.red_flags %}<li>{{ flag }}</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- What you told us -->
+    <div class="card mt-4">
+      <div class="card-header">What you told us</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Symptoms</dt>
+          <dd class="col-sm-8">{{ analysis.symptom_labels|join:", "|default:"None selected" }}</dd>
+
+          <dt class="col-sm-4">In your words</dt>
+          <dd class="col-sm-8">{{ analysis.description|default:"--"|linebreaksbr }}</dd>
+
+          <dt class="col-sm-4">Pain level</dt>
+          <dd class="col-sm-8">{{ analysis.pain_level }} / 10</dd>
+
+          <dt class="col-sm-4">Duration</dt>
+          <dd class="col-sm-8">{{ analysis.get_duration_display }}</dd>
+
+          <dt class="col-sm-4">Swelling</dt>
+          <dd class="col-sm-8">{{ analysis.has_swelling|yesno:"Yes,No" }}</dd>
+
+          <dt class="col-sm-4">Fever</dt>
+          <dd class="col-sm-8">{{ analysis.has_fever|yesno:"Yes,No" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {% include "partials/disclaimer.html" with disclaimer=disclaimer %}
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <a href="{{ booking_url }}" class="btn btn-primary">
+        <i class="bi bi-calendar-plus me-1"></i> Book an appointment
+      </a>
+      <a href="{% url 'aiassistant:chat' %}" class="btn btn-outline-primary">
+        <i class="bi bi-chat-dots me-1"></i> Ask a follow-up question
+      </a>
+      <a href="{% url 'aiassistant:symptom_checker' %}" class="btn btn-outline-secondary">
+        Run another check
+      </a>
+
+      {% if is_admin_role or is_dentist_role %}
+        {% if not analysis.reviewed_by_dentist %}
+          <form method="post" action="{% url 'aiassistant:symptom_mark_reviewed' analysis.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-outline-success">
+              <i class="bi bi-check2-square me-1"></i> Mark as reviewed
+            </button>
+          </form>
+        {% else %}
+          <span class="badge bg-success-subtle text-success-emphasis align-self-center px-3 py-2">
+            <i class="bi bi-check2-circle me-1"></i> Reviewed by the clinic
+          </span>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    {% if is_admin_role or is_dentist_role %}
+      <div class="card mt-4">
+        <div class="card-body small">
+          <strong>Submitted by:</strong>
+          {% if analysis.patient %}
+            <a href="{% url 'accounts:patient_detail' analysis.patient.pk %}">
+              {{ analysis.user.display_name }} ({{ analysis.patient.patient_code }})
+            </a>
+          {% else %}
+            {{ analysis.user.display_name }}
+          {% endif %}
+          &middot; engine: {{ analysis.provider }}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

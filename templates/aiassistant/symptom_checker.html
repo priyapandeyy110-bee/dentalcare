@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+
+{% block title %}Symptom checker -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h1 class="h4 mb-1">Preliminary symptom check</h1>
+        <p class="text-body-secondary mb-0">
+          Tell us what you are feeling and we will suggest how soon you should be seen.
+        </p>
+      </div>
+      <span class="badge {% if ai_live %}bg-success-subtle text-success-emphasis{% else %}bg-secondary-subtle text-secondary-emphasis{% endif %} ai-badge">
+        <i class="bi bi-robot"></i> {{ provider_label }}
+      </span>
+    </div>
+
+    <div class="alert alert-danger d-flex align-items-start gap-2">
+      <i class="bi bi-exclamation-octagon fs-4"></i>
+      <div>
+        <strong>If you have difficulty breathing or swallowing, swelling spreading to your
+        eye or neck, or bleeding that will not stop, do not use this form.</strong>
+        Call {{ CLINIC_EMERGENCY_NUMBER }} or go to your nearest emergency department now.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+
+          <fieldset class="mb-4">
+            <legend class="h6">{{ form.symptoms.label }}</legend>
+            <div class="row">
+              {% for checkbox in form.symptoms %}
+                <div class="col-md-6">
+                  <div class="form-check">
+                    {{ checkbox.tag }}
+                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                      {{ checkbox.choice_label }}
+                    </label>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            {% for error in form.symptoms.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </fieldset>
+
+          {% include "partials/form_field.html" with field=form.description %}
+
+          <div class="row">
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.pain_level %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.duration %}</div>
+          </div>
+
+          <fieldset class="mb-3">
+            <legend class="h6">Any of these as well?</legend>
+            {% include "partials/form_field.html" with field=form.has_swelling %}
+            {% include "partials/form_field.html" with field=form.has_fever %}
+            {% include "partials/form_field.html" with field=form.difficulty_swallowing %}
+          </fieldset>
+
+          <div class="disclaimer-box mb-3">
+            {% include "partials/form_field.html" with field=form.consent %}
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-search me-1"></i> Check my symptoms
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card ai-panel mb-4">
+      <div class="card-body">
+        <h2 class="h6"><i class="bi bi-info-circle me-1"></i>How this works</h2>
+        <ol class="small text-body-secondary mb-0 ps-3">
+          <li class="mb-2">You describe your symptoms and how long they have been going on.</li>
+          <li class="mb-2">The assistant sorts them into possible <em>areas of concern</em> -- not a diagnosis.</li>
+          <li class="mb-2">You get an urgency level and self-care advice for until you are seen.</li>
+          <li>You can book straight from the result, with the reason pre-filled.</li>
+        </ol>
+      </div>
+    </div>
+
+    {% if recent %}
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Your recent checks</span>
+          <a href="{% url 'aiassistant:symptom_history' %}" class="small">All</a>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for analysis in recent %}
+            <li class="list-group-item">
+              <a href="{% url 'aiassistant:symptom_detail' analysis.pk %}" class="text-decoration-none">
+                <span class="badge bg-{{ analysis.urgency_css }}-subtle text-{{ analysis.urgency_css }}-emphasis">
+                  {{ analysis.urgency }}
+                </span>
+                <span class="small ms-1">{{ analysis.created_at|date:"d M Y" }}</span>
+              </a>
+              <div class="small text-body-secondary">
+                {{ analysis.symptom_labels|join:", "|default:"Free-text description" }}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

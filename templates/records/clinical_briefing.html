@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+{% block title %}Pre-visit briefing -- {{ patient.user.display_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h1 class="h4 mb-1">Pre-visit briefing</h1>
+        <div class="text-body-secondary">
+          <a href="{% url 'accounts:patient_detail' patient.pk %}">{{ patient.user.display_name }}</a>
+          &middot; {{ patient.patient_code }}
+          {% if appointment %}
+            &middot; {{ appointment.scheduled_for|date:"d M Y, g:i A" }}
+          {% endif %}
+        </div>
+      </div>
+      {% include "partials/ai_badge.html" with is_fallback=is_fallback %}
+    </div>
+
+    <div class="card ai-panel">
+      <div class="card-body">
+        {{ summary|markdownish }}
+      </div>
+    </div>
+
+    <div class="alert alert-secondary small mt-3">
+      <i class="bi bi-info-circle me-1"></i>
+      This briefing is compiled automatically from the patient record to save you
+      reading time. It is decision <em>support</em> only -- verify everything
+      clinically, and make the diagnosis and treatment plan yourself.
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'records:treatment_create' patient.pk %}{% if appointment %}?appointment={{ appointment.pk }}{% endif %}"
+         class="btn btn-primary">
+        <i class="bi bi-clipboard2-plus me-1"></i>Record treatment
+      </a>
+      <a href="{% url 'accounts:patient_detail' patient.pk %}" class="btn btn-outline-secondary">
+        Full patient record
+      </a>
+      {% if appointment %}
+        <a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-outline-secondary">
+          Appointment
+        </a>
+      {% endif %}
+      <button onclick="location.reload()" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-clockwise me-1"></i>Regenerate
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}

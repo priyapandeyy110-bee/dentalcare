@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+
+{% block title %}Book an appointment -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <h1 class="h4 mb-1">Book an appointment</h1>
+    <p class="text-body-secondary">
+      Pick a dentist and a date -- only genuinely free times are shown.
+    </p>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" id="bookingForm" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+
+          {% if is_staff_booking %}
+            {% include "partials/form_field.html" with field=form.patient %}
+          {% endif %}
+
+          <div class="row">
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.dentist %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.date %}</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">
+              Available times <span class="text-danger">*</span>
+            </label>
+            <div id="slotContainer" class="slot-grid">
+              {% for value, label in form.fields.slot.choices %}
+                <div class="slot-option">
+                  <input type="radio" name="slot" id="slot_{{ forloop.counter }}" value="{{ value }}"
+                         {% if form.data.slot == value %}checked{% endif %}>
+                  <label for="slot_{{ forloop.counter }}">{{ label }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            <div id="slotMessage" class="form-text">
+              {% if not form.fields.slot.choices %}
+                Choose a dentist and a date to see the available times.
+              {% endif %}
+            </div>
+            {% for error in form.slot.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+
+          {% include "partials/form_field.html" with field=form.reason %}
+          {% include "partials/form_field.html" with field=form.symptoms %}
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-calendar-check me-1"></i> Confirm booking
+            </button>
+            <a href="{% url 'appointments:list' %}" class="btn btn-link">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card ai-panel mt-4">
+      <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <strong><i class="bi bi-robot me-1"></i>Not sure how urgent it is?</strong>
+          <div class="small text-body-secondary">
+            Run the symptom checker first -- it suggests how soon you should be seen
+            and pre-fills this form.
+          </div>
+        </div>
+        <a href="{% url 'aiassistant:symptom_checker' %}" class="btn btn-outline-primary">
+          Check my symptoms
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const dentistField = document.getElementById("{{ form.dentist.id_for_label }}");
+  const dateField = document.getElementById("{{ form.date.id_for_label }}");
+  const container = document.getElementById("slotContainer");
+  const message = document.getElementById("slotMessage");
+  const slotsUrl = "{% url 'appointments:slots_api' %}";
+
+  async function loadSlots() {
+    const dentist = dentistField.value;
+    const date = dateField.value;
+
+    if (!dentist || !date) {
+      container.innerHTML = "";
+      message.textContent = "Choose a dentist and a date to see the available times.";
+      return;
+    }
+
+    container.innerHTML = "";
+    message.innerHTML = "<span class='spinner-border spinner-border-sm me-1'></span>Checking availability...";
+
+    try {
+      const params = new URLSearchParams({ dentist: dentist, date: date });
+      const response = await fetch(slotsUrl + "?" + params.toString());
+      if (!response.ok) throw new Error("request failed");
+      const data = await response.json();
+
+      if (!data.slots.length) {
+        message.textContent = data.message || "No free slots on that day. Try another date.";
+        return;
+      }
+
+      message.textContent = data.slots.length + " times available.";
+      data.slots.forEach(function (slot, index) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "slot-option";
+        wrapper.innerHTML =
+          "<input type='radio' name='slot' id='slot_live_" + index + "' value='" + slot.value + "'>" +
+          "<label for='slot_live_" + index + "'>" + slot.label + "</label>";
+        container.appendChild(wrapper);
+      });
+    } catch (error) {
+      message.textContent = "Could not load the available times. Please try again.";
+    }
+  }
+
+  dentistField.addEventListener("change", loadSlots);
+  dateField.addEventListener("change", loadSlots);
+
+  // Load on first render when the form arrives pre-filled (e.g. from the symptom checker).
+  if (dentistField.value && dateField.value && !container.children.length) {
+    loadSlots();
+  }
+})();
+</script>
+{% endblock %}

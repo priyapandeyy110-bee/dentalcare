@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Dental FAQ -- {{ CLINIC_NAME }}{% endblock %}
+{% block main_class %}container py-4{% endblock %}
+
+{% block content %}
+{% if not user.is_authenticated %}
+  <div class="mb-4">
+    <a href="{% url 'core:home' %}" class="text-decoration-none">
+      <i class="bi bi-arrow-left"></i> Back to {{ CLINIC_NAME }}
+    </a>
+  </div>
+{% endif %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <h1 class="h4 mb-1">Dental questions, answered</h1>
+    <p class="text-body-secondary">
+      Common questions we are asked at the clinic. For anything specific to you,
+      ask the <a href="{% url 'aiassistant:chat' %}">AI assistant</a> or book a visit.
+    </p>
+
+    <form method="get" class="mb-4">
+      <div class="input-group">
+        <input type="search" name="q" value="{{ query }}" class="form-control"
+               placeholder="Search: sensitivity, braces, bleeding gums...">
+        <button class="btn btn-primary"><i class="bi bi-search"></i></button>
+        {% if query %}<a href="{% url 'aiassistant:faq' %}" class="btn btn-outline-secondary">Clear</a>{% endif %}
+      </div>
+    </form>
+
+    {% if entries %}
+      <div class="accordion" id="faqAccordion">
+        {% for entry in entries %}
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
+                      type="button" data-bs-toggle="collapse" data-bs-target="#faq{{ forloop.counter }}">
+                {{ entry.title }}
+              </button>
+            </h2>
+            <div id="faq{{ forloop.counter }}"
+                 class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                 data-bs-parent="#faqAccordion">
+              <div class="accordion-body">{{ entry.answer }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "partials/empty_state.html" with icon="bi-search" message="No FAQ entry matched that search." %}
+    {% endif %}
+
+    {% include "partials/disclaimer.html" with disclaimer=disclaimer %}
+
+    <div class="text-center mt-4">
+      <a href="{% url 'aiassistant:chat' %}" class="btn btn-primary">
+        <i class="bi bi-chat-dots me-1"></i> Ask the assistant your own question
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

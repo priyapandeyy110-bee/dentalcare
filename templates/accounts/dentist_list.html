@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Dentists -- {{ CLINIC_NAME }}{% endblock %}
+{% block main_class %}container py-4{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h4 mb-0">Our dentists</h1>
+  {% if is_admin_role %}
+    <a href="{% url 'accounts:staff_create' %}" class="btn btn-primary">
+      <i class="bi bi-person-badge me-1"></i>Add dentist
+    </a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-4">
+  <div class="input-group" style="max-width:420px">
+    <input type="search" name="specialization" value="{{ selected_specialization }}"
+           class="form-control" placeholder="Filter by specialization">
+    <button class="btn btn-outline-primary">Filter</button>
+  </div>
+</form>
+
+<div class="row g-4">
+  {% for dentist in dentists %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex gap-3 mb-3">
+            <span class="avatar-initials avatar-lg">{{ dentist.user.initials }}</span>
+            <div>
+              <h2 class="h6 mb-1">{{ dentist.display_name }}</h2>
+              <div class="small text-body-secondary">{{ dentist.specialization }}</div>
+              <div class="small text-body-secondary">
+                {{ dentist.qualification }} &middot; {{ dentist.experience_years }} yrs
+              </div>
+            </div>
+          </div>
+          {% if dentist.bio %}<p class="small">{{ dentist.bio|truncatewords:22 }}</p>{% endif %}
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small">Consultation: <strong>{{ dentist.consultation_fee }}</strong></span>
+            {% if dentist.is_accepting_patients %}
+              <span class="badge bg-success-subtle text-success-emphasis">Accepting patients</span>
+            {% else %}
+              <span class="badge bg-secondary-subtle text-secondary-emphasis">Not accepting</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-footer bg-white d-flex gap-2">
+          <a href="{% url 'accounts:dentist_detail' dentist.pk %}" class="btn btn-sm btn-outline-secondary flex-grow-1">Profile</a>
+          {% if user.is_authenticated and dentist.is_accepting_patients %}
+            <a href="{% url 'appointments:book' %}?dentist={{ dentist.pk }}" class="btn btn-sm btn-primary flex-grow-1">Book</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      {% include "partials/empty_state.html" with icon="bi-person-badge" message="No dentists match this filter." %}
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

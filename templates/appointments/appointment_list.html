@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+{% block title %}Appointments -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h4 mb-0">Appointments</h1>
+  <a href="{% url 'appointments:book' %}" class="btn btn-primary">
+    <i class="bi bi-calendar-plus me-1"></i>Book appointment
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <select name="when" class="form-select form-select-sm">
+          <option value="upcoming" {% if selected_when == "upcoming" %}selected{% endif %}>Upcoming</option>
+          <option value="today" {% if selected_when == "today" %}selected{% endif %}>Today</option>
+          <option value="past" {% if selected_when == "past" %}selected{% endif %}>Past</option>
+          <option value="all" {% if selected_when == "all" %}selected{% endif %}>All</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">Any status</option>
+          {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm"
+               placeholder="Reference, patient or dentist">
+      </div>
+      <div class="col-md-2 d-grid">
+        <button class="btn btn-sm btn-outline-primary">Filter</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead><tr>
+        <th>Reference</th><th>When</th>
+        {% if not is_patient_role %}<th>Patient</th>{% endif %}
+        <th>Dentist</th><th>Reason</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for appointment in page_obj %}
+          <tr>
+            <td class="small font-monospace">{{ appointment.reference }}</td>
+            <td>
+              {{ appointment.scheduled_for|date:"d M Y" }}
+              <div class="small text-body-secondary">{{ appointment.scheduled_for|time:"g:i A" }}</div>
+            </td>
+            {% if not is_patient_role %}
+              <td>
+                <a href="{% url 'accounts:patient_detail' appointment.patient.pk %}" class="text-decoration-none">
+                  {{ appointment.patient.user.display_name }}
+                </a>
+                <div class="small text-body-secondary">{{ appointment.patient.patient_code }}</div>
+              </td>
+            {% endif %}
+            <td class="small">{{ appointment.dentist.display_name }}</td>
+            <td class="small">{{ appointment.get_reason_display }}</td>
+            <td>
+              <span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">
+                {{ appointment.get_status_display }}
+              </span>
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
+              {% if appointment.is_editable %}
+                <a href="{% url 'appointments:reschedule' appointment.pk %}" class="btn btn-sm btn-outline-primary" title="Reschedule">
+                  <i class="bi bi-arrow-repeat"></i>
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">
+            {% include "partials/empty_state.html" with icon="bi-calendar-x" message="No appointments match these filters." %}
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{% include "partials/pagination.html" %}</div>
+</div>
+{% endblock %}

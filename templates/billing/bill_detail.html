@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+
+{% block title %}{{ bill.invoice_number }} -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h1 class="h4 mb-1">Invoice {{ bill.invoice_number }}</h1>
+        <div class="text-body-secondary">
+          Issued {{ bill.issued_on|date:"d M Y" }}
+          {% if bill.due_date %}&middot; due {{ bill.due_date|date:"d M Y" }}{% endif %}
+        </div>
+        <span class="badge bg-{{ bill.status_css }}-subtle text-{{ bill.status_css }}-emphasis">
+          {{ bill.get_status_display }}
+        </span>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'billing:invoice_print' bill.pk %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-printer me-1"></i>Print
+        </a>
+        {% if is_admin_role and bill.status != "PAID" %}
+          <a href="{% url 'billing:edit' bill.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">Charges</div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr>
+            <th>Description</th><th class="text-end">Qty</th>
+            <th class="text-end">Unit price</th><th class="text-end">Amount</th>
+          </tr></thead>
+          <tbody>
+            {% for item in bill.items.all %}
+              <tr>
+                <td>{{ item.description }}</td>
+                <td class="text-end">{{ item.quantity }}</td>
+                <td class="text-end">{{ item.unit_price|currency }}</td>
+                <td class="text-end">{{ item.line_total|currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center text-body-secondary py-3">No charges on this invoice.</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr><td colspan="3" class="text-end">Subtotal</td><td class="text-end">{{ bill.subtotal|currency }}</td></tr>
+            {% if bill.discount %}
+              <tr><td colspan="3" class="text-end">Discount</td><td class="text-end text-success">-{{ bill.discount|currency }}</td></tr>
+            {% endif %}
+            {% if bill.tax_percent %}
+              <tr><td colspan="3" class="text-end">Tax ({{ bill.tax_percent }}%)</td><td class="text-end">{{ bill.tax_amount|currency }}</td></tr>
+            {% endif %}
+            <tr class="fw-bold"><td colspan="3" class="text-end">Total</td><td class="text-end">{{ bill.total|currency }}</td></tr>
+            <tr><td colspan="3" class="text-end">Paid</td><td class="text-end text-success">{{ bill.amount_paid|currency }}</td></tr>
+            <tr class="fw-bold {% if bill.balance_due %}text-danger{% endif %}">
+              <td colspan="3" class="text-end">Balance due</td><td class="text-end">{{ bill.balance_due|currency }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Payments received</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Date</th><th>Method</th><th>Reference</th><th class="text-end">Amount</th></tr></thead>
+          <tbody>
+            {% for payment in bill.payments.all %}
+              <tr>
+                <td class="small">{{ payment.paid_on|date:"d M Y" }}</td>
+                <td class="small">{{ payment.get_method_display }}</td>
+                <td class="small font-monospace">{{ payment.reference|default:"--" }}</td>
+                <td class="text-end">{{ payment.amount|currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center text-body-secondary py-3">No payments recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-header">Patient</div>
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="avatar-initials avatar-muted">{{ bill.patient.user.initials }}</span>
+          <div>
+            {% if is_admin_role or is_dentist_role %}
+              <a href="{% url 'accounts:patient_detail' bill.patient.pk %}" class="fw-semibold text-decoration-none">
+                {{ bill.patient.user.display_name }}
+              </a>
+            {% else %}
+              <span class="fw-semibold">{{ bill.patient.user.display_name }}</span>
+            {% endif %}
+            <div class="small text-body-secondary">{{ bill.patient.patient_code }}</div>
+          </div>
+        </div>
+        {% if bill.treatment %}
+          <div class="small">
+            Treatment:
+            <a href="{% url 'records:treatment_detail' bill.treatment.pk %}">
+              {{ bill.treatment.get_procedure_display }}
+            </a>
+          </div>
+        {% endif %}
+        {% if bill.appointment %}
+          <div class="small">
+            Appointment:
+            <a href="{% url 'appointments:detail' bill.appointment.pk %}">{{ bill.appointment.reference }}</a>
+          </div>
+        {% endif %}
+        {% if bill.notes %}<div class="small mt-2">{{ bill.notes }}</div>{% endif %}
+      </div>
+    </div>
+
+    {% if payment_form %}
+      <div class="card mb-4">
+        <div class="card-header">Record a payment</div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "partials/form.html" with form=payment_form %}
+            <button class="btn btn-primary w-100">Record payment</button>
+          </form>
+        </div>
+      </div>
+
+      {% if not bill.amount_paid %}
+        <form method="post" action="{% url 'billing:cancel' bill.pk %}"
+              onsubmit="return confirm('Cancel this invoice?');">
+          {% csrf_token %}
+          <button class="btn btn-outline-danger w-100">Cancel this invoice</button>
+        </form>
+      {% endif %}
+    {% elif is_patient_role and bill.balance_due %}
+      <div class="card border-warning">
+        <div class="card-body">
+          <h2 class="h6">Paying this invoice</h2>
+          <p class="small mb-0">
+            Outstanding: <strong>{{ bill.balance_due|currency }}</strong>.
+            Payment is taken at the clinic reception -- cash, card or UPI.
+            Call {{ CLINIC_PHONE }} with any question about this invoice.
+          </p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

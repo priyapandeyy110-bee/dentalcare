@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Staff accounts -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h4 mb-0">Staff accounts</h1>
+  <a href="{% url 'accounts:staff_create' %}" class="btn btn-primary">
+    <i class="bi bi-person-plus me-1"></i>Add staff account
+  </a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead><tr>
+        <th>Name</th><th>Username</th><th>Role</th><th>Contact</th><th>Profile</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for member in staff_members %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span class="avatar-initials avatar-muted">{{ member.initials }}</span>
+                <span class="fw-semibold">{{ member.display_name }}</span>
+              </div>
+            </td>
+            <td class="small font-monospace">{{ member.username }}</td>
+            <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ member.get_role_display }}</span></td>
+            <td class="small">
+              {{ member.phone|default:"--" }}
+              <div class="text-body-secondary">{{ member.email }}</div>
+            </td>
+            <td class="small">
+              {% if member.role == "DENTIST" %}
+                {% if member.dentist_profile %}
+                  <a href="{% url 'accounts:dentist_detail' member.dentist_profile.pk %}">
+                    {{ member.dentist_profile.specialization }}
+                  </a>
+                {% else %}
+                  <a href="{% url 'accounts:dentist_profile_edit' member.pk %}" class="text-danger">
+                    Profile missing -- complete it
+                  </a>
+                {% endif %}
+              {% else %}
+                <span class="text-body-secondary">--</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if member.is_active %}
+                <span class="badge bg-success-subtle text-success-emphasis">Active</span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary-emphasis">Deactivated</span>
+              {% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              {% if member.role == "DENTIST" %}
+                <a href="{% url 'accounts:dentist_profile_edit' member.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+              {% endif %}
+              {% if member != user %}
+                <form method="post" action="{% url 'accounts:toggle_user_active' member.pk %}" class="d-inline"
+                      onsubmit="return confirm('Change this account status?');">
+                  {% csrf_token %}
+                  <button class="btn btn-sm {% if member.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                    {% if member.is_active %}Deactivate{% else %}Reactivate{% endif %}
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">
+            {% include "partials/empty_state.html" with icon="bi-person-badge" message="No staff accounts yet." %}
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

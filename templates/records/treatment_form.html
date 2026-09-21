@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <h1 class="h4 mb-1">{{ title }}</h1>
+    <p class="text-body-secondary">
+      <a href="{% url 'accounts:patient_detail' patient.pk %}">{{ patient.user.display_name }}</a>
+      &middot; {{ patient.patient_code }}
+      {% if patient.user.age %}&middot; {{ patient.user.age }} years{% endif %}
+    </p>
+
+    {% if patient.allergies or patient.chronic_conditions %}
+      <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        {% if patient.allergies %}<strong>Allergies:</strong> {{ patient.allergies }}<br>{% endif %}
+        {% if patient.chronic_conditions %}<strong>Conditions:</strong> {{ patient.chronic_conditions }}{% endif %}
+      </div>
+    {% endif %}
+
+    {% if appointment %}
+      <div class="alert alert-info">
+        <i class="bi bi-calendar-check me-1"></i>
+        Linked to appointment <strong>{{ appointment.reference }}</strong>
+        ({{ appointment.scheduled_for|date:"d M Y, g:i A" }}).
+        Saving this record will mark the appointment as completed.
+        {% if appointment.symptoms %}
+          <div class="small mt-1"><strong>Patient reported:</strong> {{ appointment.symptoms }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="row">
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.treatment_date %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.procedure %}</div>
+            <div class="col-12">{% include "partials/form_field.html" with field=form.chief_complaint %}</div>
+            <div class="col-12">{% include "partials/form_field.html" with field=form.diagnosis %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.tooth_region %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.tooth_numbers %}</div>
+            <div class="col-12">{% include "partials/form_field.html" with field=form.treatment_notes %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.status %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.cost %}</div>
+          </div>
+
+          <hr>
+          <h2 class="h6">Follow-up</h2>
+          <div class="row">
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.follow_up_date %}</div>
+            <div class="col-12">{% include "partials/form_field.html" with field=form.follow_up_instructions %}</div>
+          </div>
+          <p class="small text-body-secondary">
+            Setting a follow-up date sends the patient an automatic reminder as it
+            approaches.
+          </p>
+
+          <button type="submit" class="btn btn-primary">Save treatment record</button>
+          <a href="{% url 'accounts:patient_detail' patient.pk %}" class="btn btn-link">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

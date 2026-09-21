@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% load dental_extras humanize %}
+
+{% block title %}My dashboard -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h1 class="h4 mb-0">Hello, {{ user.first_name|default:user.username }}</h1>
+    <div class="text-body-secondary small">
+      Patient ID {{ patient.patient_code }}
+      {% if risk_flags %}
+        {% for flag in risk_flags %}
+          <span class="badge bg-warning-subtle text-warning-emphasis ms-1">{{ flag }}</span>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'appointments:book' %}" class="btn btn-primary">
+      <i class="bi bi-calendar-plus me-1"></i> Book appointment
+    </a>
+    <a href="{% url 'aiassistant:chat' %}" class="btn btn-outline-primary">
+      <i class="bi bi-robot me-1"></i> Ask the assistant
+    </a>
+  </div>
+</div>
+
+{% if next_appointment %}
+<div class="card mb-4 border-primary">
+  <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <i class="bi bi-calendar-check fs-1 text-primary"></i>
+      <div>
+        <div class="text-body-secondary small text-uppercase">Your next appointment</div>
+        <div class="h5 mb-1">{{ next_appointment.scheduled_for|date:"l, d F Y" }} at {{ next_appointment.scheduled_for|time:"g:i A" }}</div>
+        <div>
+          {{ next_appointment.dentist.display_name }}
+          &middot; {{ next_appointment.get_reason_display }}
+          <span class="badge bg-{{ next_appointment.status_css }}-subtle text-{{ next_appointment.status_css }}-emphasis">
+            {{ next_appointment.get_status_display }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'appointments:detail' next_appointment.pk %}" class="btn btn-sm btn-outline-primary">Details</a>
+      {% if next_appointment.is_editable %}
+        <a href="{% url 'appointments:reschedule' next_appointment.pk %}" class="btn btn-sm btn-outline-secondary">Reschedule</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card mb-4">
+  <div class="card-body text-center py-4">
+    <i class="bi bi-calendar-x fs-2 text-body-secondary d-block mb-2"></i>
+    <p class="mb-3">You have no upcoming appointments.</p>
+    <a href="{% url 'appointments:book' %}" class="btn btn-primary">Book one now</a>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-8">
+
+    <!-- AI tools -->
+    <div class="card ai-panel mb-4">
+      <div class="card-body">
+        <h2 class="h6 d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-robot text-info-emphasis"></i> AI dental assistance
+          {% if not ai_live %}
+            <span class="badge bg-secondary-subtle text-secondary-emphasis ai-badge">Offline engine</span>
+          {% endif %}
+        </h2>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <a href="{% url 'aiassistant:chat' %}" class="text-decoration-none">
+              <div class="border rounded p-3 h-100 bg-white">
+                <i class="bi bi-chat-dots fs-4 text-primary"></i>
+                <div class="fw-semibold mt-2">Ask a question</div>
+                <div class="small text-body-secondary">Sensitivity, gums, aftercare, procedures.</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-4">
+            <a href="{% url 'aiassistant:symptom_checker' %}" class="text-decoration-none">
+              <div class="border rounded p-3 h-100 bg-white">
+                <i class="bi bi-clipboard2-check fs-4 text-primary"></i>
+                <div class="fw-semibold mt-2">Check symptoms</div>
+                <div class="small text-body-secondary">Find out how soon you should be seen.</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-4">
+            <a href="{% url 'aiassistant:care_plan' %}" class="text-decoration-none">
+              <div class="border rounded p-3 h-100 bg-white">
+                <i class="bi bi-heart-pulse fs-4 text-primary"></i>
+                <div class="fw-semibold mt-2">My care plan</div>
+                <div class="small text-body-secondary">A routine built around your own record.</div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        {% if latest_analysis %}
+          <div class="alert alert-{{ latest_analysis.urgency_css }} mt-3 mb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <strong>Last symptom check ({{ latest_analysis.created_at|date:"d M" }}):</strong>
+              {{ latest_analysis.get_urgency_display }}
+            </div>
+            <a href="{% url 'aiassistant:symptom_detail' latest_analysis.pk %}" class="btn btn-sm btn-outline-dark">View</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Treatment history -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Recent treatments</span>
+        <a href="{% url 'records:treatment_list' %}" class="small">View all</a>
+      </div>
+      <div class="card-body">
+        {% if treatments %}
+          <ul class="timeline">
+            {% for treatment in treatments %}
+              <li class="timeline-item">
+                <div class="d-flex justify-content-between flex-wrap">
+                  <div>
+                    <a href="{% url 'records:treatment_detail' treatment.pk %}" class="fw-semibold text-decoration-none">
+                      {{ treatment.get_procedure_display }}
+                    </a>
+                    <div class="small text-body-secondary">
+                      {{ treatment.dentist.display_name }} &middot; {{ treatment.treatment_date|date:"d M Y" }}
+                    </div>
+                    <div class="small">{{ treatment.diagnosis|truncatewords:18 }}</div>
+                  </div>
+                  <span class="badge bg-{{ treatment.status_css }}-subtle text-{{ treatment.status_css }}-emphasis align-self-start">
+                    {{ treatment.get_status_display }}
+                  </span>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          {% include "partials/empty_state.html" with icon="bi-clipboard2-pulse" message="No treatment records yet." %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Upcoming + past appointments -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Appointment history</span>
+        <a href="{% url 'appointments:list' %}" class="small">View all</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead><tr>
+            <th>When</th><th>Dentist</th><th>Reason</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody>
+            {% for appointment in upcoming_appointments %}
+              <tr class="table-light">
+                <td>{{ appointment.scheduled_for|date:"d M Y, g:i A" }}</td>
+                <td>{{ appointment.dentist.display_name }}</td>
+                <td>{{ appointment.get_reason_display }}</td>
+                <td><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
+                <td class="text-end"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+              </tr>
+            {% endfor %}
+            {% for appointment in past_appointments %}
+              <tr>
+                <td class="text-body-secondary">{{ appointment.scheduled_for|date:"d M Y, g:i A" }}</td>
+                <td>{{ appointment.dentist.display_name }}</td>
+                <td>{{ appointment.get_reason_display }}</td>
+                <td><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
+                <td class="text-end"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+              </tr>
+            {% empty %}
+              {% if not upcoming_appointments %}
+                <tr><td colspan="5" class="text-center text-body-secondary py-4">No appointments yet.</td></tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <div class="card mb-4 {% if unpaid_total %}border-warning{% endif %}">
+      <div class="card-body">
+        <div class="stat-label">Outstanding balance</div>
+        <div class="stat-value">{{ unpaid_total|currency }}</div>
+        <a href="{% url 'billing:list' %}" class="btn btn-sm btn-outline-primary mt-2">View invoices</a>
+      </div>
+    </div>
+
+    {% if care_plan %}
+      <div class="card ai-panel mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-heart-pulse me-1"></i>Your care plan</span>
+          {% include "partials/ai_badge.html" with is_fallback=care_plan.is_fallback %}
+        </div>
+        <div class="card-body">
+          <p class="fw-semibold">{{ care_plan.headline }}</p>
+          <ul class="small mb-2">
+            {% for item in care_plan.daily_routine|slice:":3" %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+          <a href="{% url 'aiassistant:care_plan' %}" class="small">See the full plan</a>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if prescriptions %}
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Recent prescriptions</span>
+          <a href="{% url 'records:prescription_list' %}" class="small">All</a>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for prescription in prescriptions %}
+            <li class="list-group-item">
+              <a href="{% url 'records:prescription_detail' prescription.pk %}" class="text-decoration-none fw-semibold">
+                {{ prescription.issued_on|date:"d M Y" }}
+              </a>
+              <div class="small text-body-secondary">
+                {% for item in prescription.items.all|slice:":3" %}{{ item.medicine_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if notifications %}
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Notifications</span>
+          <a href="{% url 'notifications:list' %}" class="small">All</a>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for notification in notifications %}
+            <li class="list-group-item">
+              <a href="{% url 'notifications:mark_read' notification.pk %}" class="text-decoration-none">
+                <i class="bi bi-{{ notification.icon }} me-1"></i>
+                <span class="fw-semibold">{{ notification.title }}</span>
+              </a>
+              <div class="small text-body-secondary">{{ notification.created_at|naturaltime }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

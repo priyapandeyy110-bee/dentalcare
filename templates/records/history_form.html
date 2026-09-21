@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Dental history -- {{ patient.user.display_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <h1 class="h4 mb-1">Dental and medical history</h1>
+    <p class="text-body-secondary">
+      <a href="{% url 'accounts:patient_detail' patient.pk %}">{{ patient.user.display_name }}</a>
+      &middot; {{ patient.patient_code }}
+    </p>
+
+    <div class="row g-4">
+      <div class="col-md-5">
+        <div class="card">
+          <div class="card-header">Add an entry</div>
+          <div class="card-body">
+            <form method="post" novalidate>
+              {% csrf_token %}
+              {% include "partials/form.html" with form=form %}
+              <button class="btn btn-primary w-100">Add entry</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <div class="card">
+          <div class="card-header">Existing entries</div>
+          <ul class="list-group list-group-flush">
+            {% for entry in entries %}
+              <li class="list-group-item">
+                <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ entry.get_category_display }}</span>
+                <strong class="ms-1">{{ entry.title }}</strong>
+                <div class="small text-body-secondary">{{ entry.description }}</div>
+                <div class="small text-body-secondary">{{ entry.recorded_on|date:"d M Y" }}</div>
+              </li>
+            {% empty %}
+              <li class="list-group-item text-center text-body-secondary py-4">Nothing recorded yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

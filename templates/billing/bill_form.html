@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <h1 class="h4 mb-1">{{ title }}</h1>
+    <p class="text-body-secondary">
+      <a href="{% url 'accounts:patient_detail' patient.pk %}">{{ patient.user.display_name }}</a>
+      &middot; {{ patient.patient_code }}
+    </p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="card mb-3">
+        <div class="card-header">Charge lines</div>
+        <div class="card-body">
+          {{ formset.management_form }}
+          {% if formset.non_form_errors %}
+            <div class="alert alert-danger">
+              {% for error in formset.non_form_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead><tr>
+                <th style="width:55%">Description</th>
+                <th style="width:15%">Quantity</th>
+                <th style="width:22%">Unit price</th>
+                <th style="width:8%">Remove</th>
+              </tr></thead>
+              <tbody>
+                {% for item_form in formset %}
+                  <tr>
+                    {{ item_form.id }}
+                    <td>{{ item_form.description }}{% for e in item_form.description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                    <td>{{ item_form.quantity }}</td>
+                    <td>{{ item_form.unit_price }}</td>
+                    <td class="text-center">{% if item_form.instance.pk %}{{ item_form.DELETE }}{% endif %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <p class="small text-body-secondary mb-0">
+            Consultation charges and each procedure go on their own line.
+          </p>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">Invoice details</div>
+        <div class="card-body">
+          <div class="row">
+            {% for field in form %}
+              <div class="col-md-4">{% include "partials/form_field.html" with field=field %}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Save invoice</button>
+      <a href="{% url 'accounts:patient_detail' patient.pk %}" class="btn btn-link">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

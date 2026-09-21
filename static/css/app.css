@@ -1,0 +1,372 @@
+/* AI-Powered Dental Management System -- application styles */
+
+:root {
+  --dental-primary: #14595c;
+  --dental-primary-dark: #0e4144;
+  --dental-accent: #2a9d8f;
+  --dental-gold: #c99700;
+  --dental-surface: #ffffff;
+  --dental-ink: #1f2d2e;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  color: var(--dental-ink);
+}
+
+/* --- Navigation ---------------------------------------------------------- */
+
+.app-navbar {
+  background: linear-gradient(90deg, var(--dental-primary) 0%, var(--dental-primary-dark) 100%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+.app-navbar .navbar-brand,
+.app-navbar .nav-link {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.app-navbar .navbar-brand {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.app-navbar .nav-link:hover,
+.app-navbar .nav-link:focus,
+.app-navbar .nav-link.active {
+  color: #fff;
+}
+
+.app-navbar .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.app-navbar .navbar-toggler-icon {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.avatar-initials.avatar-lg {
+  width: 56px;
+  height: 56px;
+  font-size: 1.25rem;
+  background: var(--dental-primary);
+  border-color: transparent;
+}
+
+.avatar-initials.avatar-muted {
+  background: #e3ecec;
+  color: var(--dental-primary);
+  border-color: #cfe0e0;
+}
+
+/* --- Cards and stats ----------------------------------------------------- */
+
+.card {
+  border: 1px solid rgba(20, 89, 92, 0.1);
+  border-radius: 0.65rem;
+  box-shadow: 0 1px 3px rgba(20, 89, 92, 0.06);
+}
+
+.card-header {
+  background: #fff;
+  border-bottom: 1px solid rgba(20, 89, 92, 0.1);
+  font-weight: 600;
+}
+
+.stat-card {
+  border-left: 4px solid var(--dental-accent);
+}
+
+.stat-card .stat-value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--dental-primary);
+}
+
+.stat-card .stat-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6c7a7b;
+}
+
+.stat-card .stat-icon {
+  font-size: 1.75rem;
+  opacity: 0.25;
+  color: var(--dental-primary);
+}
+
+.stat-card.stat-warning { border-left-color: #e9a13b; }
+.stat-card.stat-danger { border-left-color: #d9534f; }
+.stat-card.stat-success { border-left-color: #2a9d8f; }
+.stat-card.stat-info { border-left-color: #3b82a8; }
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.btn-primary {
+  background-color: var(--dental-primary);
+  border-color: var(--dental-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--dental-primary-dark);
+  border-color: var(--dental-primary-dark);
+}
+
+.btn-outline-primary {
+  color: var(--dental-primary);
+  border-color: var(--dental-primary);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--dental-primary);
+  border-color: var(--dental-primary);
+}
+
+a { color: var(--dental-primary); }
+a:hover { color: var(--dental-primary-dark); }
+
+/* --- Chat ---------------------------------------------------------------- */
+
+.chat-window {
+  height: min(62vh, 560px);
+  overflow-y: auto;
+  background: #f6f9f9;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.chat-bubble {
+  max-width: 78%;
+  padding: 0.7rem 0.95rem;
+  border-radius: 1rem;
+  margin-bottom: 0.85rem;
+  line-height: 1.55;
+  word-wrap: break-word;
+}
+
+.chat-bubble p:last-child,
+.chat-bubble ul:last-child,
+.chat-bubble ol:last-child {
+  margin-bottom: 0 !important;
+}
+
+.chat-bubble.user {
+  margin-left: auto;
+  background: var(--dental-primary);
+  color: #fff;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.chat-bubble.user a { color: #cdeeee; }
+
+.chat-bubble.assistant {
+  background: #fff;
+  border: 1px solid #dfe9e9;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.chat-meta {
+  font-size: 0.7rem;
+  color: #8a9797;
+  margin-top: -0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.chat-meta.user { text-align: right; }
+
+.typing-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 3px;
+  border-radius: 50%;
+  background: #9bb0b0;
+  animation: typing 1.2s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* --- AI panels ----------------------------------------------------------- */
+
+.ai-panel {
+  border-left: 4px solid var(--dental-accent);
+  background: linear-gradient(180deg, #f2faf9 0%, #ffffff 100%);
+}
+
+.ai-badge {
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+
+.urgency-banner {
+  border-radius: 0.5rem;
+  padding: 1rem 1.15rem;
+  border-left: 5px solid currentColor;
+}
+
+.disclaimer-box {
+  background: #fffbe9;
+  border: 1px solid #f0e2b4;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #6b5a1e;
+}
+
+/* --- Timeline ------------------------------------------------------------ */
+
+.timeline {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  position: relative;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: #dbe7e7;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 2rem;
+  padding-bottom: 1.1rem;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--dental-accent);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #dbe7e7;
+}
+
+/* --- Slot picker --------------------------------------------------------- */
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 0.5rem;
+}
+
+.slot-option input { display: none; }
+
+.slot-option label {
+  display: block;
+  text-align: center;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid #cfe0e0;
+  border-radius: 0.4rem;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.12s ease-in-out;
+}
+
+.slot-option label:hover {
+  border-color: var(--dental-accent);
+  background: #eefaf8;
+}
+
+.slot-option input:checked + label {
+  background: var(--dental-primary);
+  border-color: var(--dental-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* --- Tables -------------------------------------------------------------- */
+
+.table > :not(caption) > * > * {
+  padding: 0.65rem 0.75rem;
+}
+
+.table thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #63767a;
+  border-bottom-width: 1px;
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: #f2f8f8;
+}
+
+/* --- Landing page -------------------------------------------------------- */
+
+.hero {
+  background: linear-gradient(135deg, var(--dental-primary) 0%, var(--dental-accent) 100%);
+  color: #fff;
+  padding: 5rem 0 4.5rem;
+}
+
+.hero .lead { color: rgba(255, 255, 255, 0.92); }
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: #e6f4f2;
+  color: var(--dental-primary);
+  font-size: 1.35rem;
+}
+
+/* --- Print --------------------------------------------------------------- */
+
+@media print {
+  .app-navbar,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .card {
+    border: none;
+    box-shadow: none;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+}

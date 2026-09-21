@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Page not found{% endblock %}
+{% block main_class %}container py-5{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-compass fs-1 text-body-secondary"></i>
+  <h1 class="h3 mt-3">Page not found</h1>
+  <p class="text-body-secondary">The page you were looking for does not exist or has moved.</p>
+  <a href="{% url 'core:home' %}" class="btn btn-primary">Back to the start</a>
+</div>
+{% endblock %}

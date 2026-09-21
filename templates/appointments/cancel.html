@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Cancel {{ appointment.reference }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card border-danger">
+      <div class="card-header bg-danger-subtle text-danger-emphasis">
+        <i class="bi bi-calendar-x me-1"></i>Cancel this appointment?
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-4">Reference</dt><dd class="col-sm-8">{{ appointment.reference }}</dd>
+          <dt class="col-sm-4">When</dt>
+          <dd class="col-sm-8">{{ appointment.scheduled_for|date:"l, d F Y" }} at {{ appointment.scheduled_for|time:"g:i A" }}</dd>
+          <dt class="col-sm-4">Dentist</dt><dd class="col-sm-8">{{ appointment.dentist.display_name }}</dd>
+          <dt class="col-sm-4">Patient</dt><dd class="col-sm-8">{{ appointment.patient.user.display_name }}</dd>
+        </dl>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% include "partials/form.html" with form=form %}
+          <button type="submit" class="btn btn-danger">Yes, cancel it</button>
+          <a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-link">Keep the appointment</a>
+        </form>
+      </div>
+    </div>
+    <p class="small text-body-secondary mt-3">
+      Please give at least 24 hours notice where you can, so the slot can be offered
+      to another patient.
+    </p>
+  </div>
+</div>
+{% endblock %}

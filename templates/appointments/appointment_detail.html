@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+
+{% block title %}{{ appointment.reference }} -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h1 class="h4 mb-1">Appointment {{ appointment.reference }}</h1>
+        <span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">
+          {{ appointment.get_status_display }}
+        </span>
+      </div>
+      <div class="d-flex gap-2">
+        {% if appointment.is_editable %}
+          <a href="{% url 'appointments:reschedule' appointment.pk %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-repeat me-1"></i>Reschedule
+          </a>
+          <a href="{% url 'appointments:cancel' appointment.pk %}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Date and time</dt>
+          <dd class="col-sm-8">
+            <strong>{{ appointment.scheduled_for|date:"l, d F Y" }}</strong>
+            at {{ appointment.scheduled_for|time:"g:i A" }}
+            <span class="text-body-secondary">({{ appointment.duration_minutes }} minutes)</span>
+          </dd>
+
+          <dt class="col-sm-4">Patient</dt>
+          <dd class="col-sm-8">
+            {% if is_admin_role or is_dentist_role %}
+              <a href="{% url 'accounts:patient_detail' appointment.patient.pk %}">
+                {{ appointment.patient.user.display_name }}
+              </a>
+              <span class="text-body-secondary">({{ appointment.patient.patient_code }})</span>
+            {% else %}
+              {{ appointment.patient.user.display_name }}
+            {% endif %}
+          </dd>
+
+          <dt class="col-sm-4">Dentist</dt>
+          <dd class="col-sm-8">
+            <a href="{% url 'accounts:dentist_detail' appointment.dentist.pk %}">
+              {{ appointment.dentist.display_name }}
+            </a>
+            <div class="small text-body-secondary">{{ appointment.dentist.specialization }}</div>
+          </dd>
+
+          <dt class="col-sm-4">Reason</dt>
+          <dd class="col-sm-8">{{ appointment.get_reason_display }}</dd>
+
+          {% if appointment.symptoms %}
+            <dt class="col-sm-4">Reported symptoms</dt>
+            <dd class="col-sm-8">{{ appointment.symptoms|linebreaksbr }}</dd>
+          {% endif %}
+
+          {% if appointment.cancellation_reason %}
+            <dt class="col-sm-4">Cancellation reason</dt>
+            <dd class="col-sm-8">{{ appointment.cancellation_reason }}</dd>
+          {% endif %}
+
+          <dt class="col-sm-4">Booked</dt>
+          <dd class="col-sm-8">
+            {{ appointment.created_at|date:"d M Y, g:i A" }}
+            {% if appointment.booked_by %}by {{ appointment.booked_by.display_name }}{% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {% if appointment.ai_triage_summary %}
+      <div class="card ai-panel mb-4">
+        <div class="card-header"><i class="bi bi-robot me-1"></i>AI triage captured at booking</div>
+        <div class="card-body">{{ appointment.ai_triage_summary|markdownish }}</div>
+      </div>
+    {% endif %}
+
+    {% if treatments %}
+      <div class="card mb-4">
+        <div class="card-header">Treatment recorded at this visit</div>
+        <ul class="list-group list-group-flush">
+          {% for treatment in treatments %}
+            <li class="list-group-item">
+              <a href="{% url 'records:treatment_detail' treatment.pk %}" class="fw-semibold text-decoration-none">
+                {{ treatment.get_procedure_display }}
+              </a>
+              <div class="small text-body-secondary">{{ treatment.diagnosis|truncatewords:25 }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if bills %}
+      <div class="card">
+        <div class="card-header">Invoices for this visit</div>
+        <ul class="list-group list-group-flush">
+          {% for bill in bills %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="{% url 'billing:detail' bill.pk %}" class="text-decoration-none">{{ bill.invoice_number }}</a>
+              <span>
+                <span class="badge bg-{{ bill.status_css }}-subtle text-{{ bill.status_css }}-emphasis">
+                  {{ bill.get_status_display }}
+                </span>
+                <strong class="ms-2">{{ bill.total|currency }}</strong>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    {% if status_form %}
+      <div class="card mb-4">
+        <div class="card-header">Update this appointment</div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "partials/form.html" with form=status_form %}
+            <button class="btn btn-primary w-100">Save changes</button>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if is_admin_role or is_dentist_role %}
+      <div class="card mb-4">
+        <div class="card-header">Clinical actions</div>
+        <div class="list-group list-group-flush">
+          <a href="{% url 'records:clinical_briefing' appointment.patient.pk %}?appointment={{ appointment.pk }}"
+             class="list-group-item list-group-item-action">
+            <i class="bi bi-robot me-2 text-info-emphasis"></i>AI pre-visit briefing
+          </a>
+          <a href="{% url 'records:treatment_create' appointment.patient.pk %}?appointment={{ appointment.pk }}"
+             class="list-group-item list-group-item-action">
+            <i class="bi bi-clipboard2-plus me-2"></i>Record diagnosis and treatment
+          </a>
+          <a href="{% url 'records:prescription_create' appointment.patient.pk %}"
+             class="list-group-item list-group-item-action">
+            <i class="bi bi-capsule me-2"></i>Issue a prescription
+          </a>
+          {% if is_admin_role %}
+            <a href="{% url 'billing:create' appointment.patient.pk %}"
+               class="list-group-item list-group-item-action">
+              <i class="bi bi-receipt me-2"></i>Generate an invoice
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if appointment.patient.risk_flags %}
+        <div class="card border-warning">
+          <div class="card-header bg-warning-subtle text-warning-emphasis">
+            <i class="bi bi-exclamation-triangle me-1"></i>Patient alerts
+          </div>
+          <div class="card-body">
+            {% for flag in appointment.patient.risk_flags %}
+              <span class="badge bg-warning-subtle text-warning-emphasis mb-1">{{ flag }}</span>
+            {% endfor %}
+            {% if appointment.patient.allergies %}
+              <div class="small mt-2"><strong>Allergies:</strong> {{ appointment.patient.allergies }}</div>
+            {% endif %}
+            {% if appointment.patient.chronic_conditions %}
+              <div class="small"><strong>Conditions:</strong> {{ appointment.patient.chronic_conditions }}</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    {% if is_patient_role and appointment.is_upcoming %}
+      <div class="card">
+        <div class="card-body small">
+          <h2 class="h6">Before you come in</h2>
+          <ul class="mb-0 ps-3">
+            <li>Arrive 10 minutes early.</li>
+            <li>Bring any current medication or a list of it.</li>
+            <li>Tell us about changes to your health since your last visit.</li>
+            <li>Call {{ CLINIC_PHONE }} if you need to change the time.</li>
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

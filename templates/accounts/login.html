@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Sign in -- {{ CLINIC_NAME }}{% endblock %}
+{% block main_class %}container py-5{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="text-center mb-4">
+      <a href="{% url 'core:home' %}" class="text-decoration-none">
+        <i class="bi bi-hospital fs-1 text-primary"></i>
+        <h1 class="h4 mt-2">{{ CLINIC_NAME }}</h1>
+      </a>
+      <p class="text-body-secondary">Sign in to your account</p>
+    </div>
+
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% include "partials/form.html" with form=form %}
+          <button type="submit" class="btn btn-primary w-100">Sign in</button>
+        </form>
+      </div>
+    </div>
+
+    <p class="text-center mt-3 mb-0">
+      New patient? <a href="{% url 'accounts:signup' %}">Create an account</a>
+    </p>
+    <p class="text-center small text-body-secondary mt-3">
+      <i class="bi bi-shield-lock"></i>
+      Administrators, dentists and patients all sign in here -- you will land on
+      the dashboard for your role.
+    </p>
+  </div>
+</div>
+{% endblock %}

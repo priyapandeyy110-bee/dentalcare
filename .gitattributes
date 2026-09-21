@@ -1,0 +1,5 @@
+# Normalize to LF in the repository; Windows checkouts still get CRLF.
+* text=auto
+
+# Must stay LF -- Render runs this on Linux and CRLF breaks the shebang.
+build.sh text eol=lf

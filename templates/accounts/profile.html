@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}My profile -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <span class="avatar-initials avatar-lg">{{ user.initials }}</span>
+      <div>
+        <h1 class="h4 mb-1">{{ user.display_name }}</h1>
+        <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ user.get_role_display }}</span>
+        {% if is_patient_role and user.patient_profile %}
+          <span class="small text-body-secondary ms-2">{{ user.patient_profile.patient_code }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="card mb-4">
+        <div class="card-header">Personal details</div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">{% include "partials/form_field.html" with field=user_form.first_name %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=user_form.last_name %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=user_form.email %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=user_form.phone %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=user_form.date_of_birth %}</div>
+            <div class="col-12">{% include "partials/form_field.html" with field=user_form.address %}</div>
+          </div>
+        </div>
+      </div>
+
+      {% if profile_form %}
+        <div class="card mb-4">
+          <div class="card-header">
+            {% if is_patient_role %}Medical and dental details{% else %}Professional details{% endif %}
+          </div>
+          <div class="card-body">
+            {% if is_patient_role %}
+              <p class="small text-body-secondary">
+                Keeping this accurate matters -- your dentist uses it before prescribing
+                anything or starting treatment.
+              </p>
+            {% endif %}
+            <div class="row">
+              {% for field in profile_form %}
+                <div class="col-md-6">{% include "partials/form_field.html" with field=field %}</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-secondary">Change password</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

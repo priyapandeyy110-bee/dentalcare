@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Register -- {{ CLINIC_NAME }}{% endblock %}
+{% block main_class %}container py-5{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-9 col-lg-7">
+    <div class="text-center mb-4">
+      <a href="{% url 'core:home' %}" class="text-decoration-none">
+        <i class="bi bi-hospital fs-1 text-primary"></i>
+      </a>
+      <h1 class="h4 mt-2">Create your patient account</h1>
+      <p class="text-body-secondary">
+        Takes a minute. You can book appointments straight afterwards.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+          <div class="row">
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.first_name %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.last_name %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.username %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.email %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.phone %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.date_of_birth %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.gender %}</div>
+            <div class="col-12">{% include "partials/form_field.html" with field=form.address %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.password1 %}</div>
+            <div class="col-md-6">{% include "partials/form_field.html" with field=form.password2 %}</div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Create account</button>
+        </form>
+      </div>
+    </div>
+
+    <p class="text-center mt-3">
+      Already registered? <a href="{% url 'accounts:login' %}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

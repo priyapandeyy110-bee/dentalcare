@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ dentist.display_name }} -- {{ CLINIC_NAME }}{% endblock %}
+{% block main_class %}container py-4{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex gap-3 mb-3">
+          <span class="avatar-initials avatar-lg">{{ dentist.user.initials }}</span>
+          <div>
+            <h1 class="h4 mb-1">{{ dentist.display_name }}</h1>
+            <div class="text-body-secondary">{{ dentist.specialization }}</div>
+            <div class="small text-body-secondary">
+              {{ dentist.qualification }} &middot; {{ dentist.experience_years }} years of experience
+              &middot; Reg. {{ dentist.registration_number }}
+            </div>
+          </div>
+        </div>
+
+        {% if dentist.bio %}<p>{{ dentist.bio }}</p>{% endif %}
+
+        <dl class="row small">
+          <dt class="col-sm-4">Consultation fee</dt><dd class="col-sm-8">{{ dentist.consultation_fee }}</dd>
+          <dt class="col-sm-4">Appointment length</dt><dd class="col-sm-8">{{ dentist.slot_duration_minutes }} minutes</dd>
+          <dt class="col-sm-4">Taking new patients</dt><dd class="col-sm-8">{{ dentist.is_accepting_patients|yesno:"Yes,No" }}</dd>
+        </dl>
+
+        <div class="d-flex flex-wrap gap-2">
+          {% if user.is_authenticated and dentist.is_accepting_patients %}
+            <a href="{% url 'appointments:book' %}?dentist={{ dentist.pk }}" class="btn btn-primary">
+              <i class="bi bi-calendar-plus me-1"></i>Book with {{ dentist.display_name }}
+            </a>
+          {% endif %}
+          {% if is_admin_role %}
+            <a href="{% url 'accounts:dentist_profile_edit' dentist.user.pk %}" class="btn btn-outline-secondary">Edit profile</a>
+            <a href="{% url 'appointments:availability' %}?dentist={{ dentist.pk }}" class="btn btn-outline-secondary">Working hours</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">Weekly availability</div>
+      <ul class="list-group list-group-flush">
+        {% for block in dentist.availabilities.all %}
+          {% if block.is_active %}
+            <li class="list-group-item d-flex justify-content-between small">
+              <span>{{ block.get_weekday_display }}</span>
+              <span>{{ block.start_time|time:"g:i A" }} &ndash; {{ block.end_time|time:"g:i A" }}</span>
+            </li>
+          {% endif %}
+        {% empty %}
+          <li class="list-group-item small text-body-secondary">No working hours published yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

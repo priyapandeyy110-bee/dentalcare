@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+{% block title %}Billing -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-3">{% if is_patient_role %}My invoices{% else %}Billing{% endif %}</h1>
+
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2">
+      <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">Any status</option>
+          {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if not is_patient_role %}
+        <div class="col-md-6">
+          <input type="search" name="q" value="{{ query }}" class="form-control form-control-sm"
+                 placeholder="Invoice number, patient name or code">
+        </div>
+        <div class="col-md-3 d-grid"><button class="btn btn-sm btn-outline-primary">Search</button></div>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead><tr>
+        <th>Invoice</th><th>Date</th>
+        {% if not is_patient_role %}<th>Patient</th>{% endif %}
+        <th class="text-end">Total</th><th class="text-end">Paid</th>
+        <th class="text-end">Due</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for bill in page_obj %}
+          <tr>
+            <td class="small font-monospace">{{ bill.invoice_number }}</td>
+            <td class="small text-nowrap">{{ bill.issued_on|date:"d M Y" }}</td>
+            {% if not is_patient_role %}
+              <td>
+                <a href="{% url 'accounts:patient_detail' bill.patient.pk %}" class="text-decoration-none">
+                  {{ bill.patient.user.display_name }}
+                </a>
+              </td>
+            {% endif %}
+            <td class="text-end">{{ bill.total|currency }}</td>
+            <td class="text-end text-success">{{ bill.amount_paid|currency }}</td>
+            <td class="text-end {% if bill.balance_due %}text-danger fw-semibold{% endif %}">{{ bill.balance_due|currency }}</td>
+            <td>
+              <span class="badge bg-{{ bill.status_css }}-subtle text-{{ bill.status_css }}-emphasis">
+                {{ bill.get_status_display }}
+              </span>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'billing:detail' bill.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8">
+            {% include "partials/empty_state.html" with icon="bi-receipt" message="No invoices found." %}
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{% include "partials/pagination.html" %}</div>
+</div>
+{% endblock %}

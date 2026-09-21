@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+{% block title %}Triage queue -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h4 mb-0">
+    {% if is_patient_role %}My symptom checks{% else %}AI triage queue{% endif %}
+  </h1>
+  <a href="{% url 'aiassistant:symptom_checker' %}" class="btn btn-primary">
+    <i class="bi bi-clipboard2-check me-1"></i>New check
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-auto"><label class="col-form-label small">Urgency</label></div>
+      <div class="col-auto">
+        <select name="urgency" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">All</option>
+          {% for value, label in urgency_choices %}
+            <option value="{{ value }}" {% if selected_urgency == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead><tr>
+        <th>When</th>
+        {% if not is_patient_role %}<th>Patient</th>{% endif %}
+        <th>Symptoms</th><th>Pain</th><th>Urgency</th><th>Reviewed</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for analysis in page_obj %}
+          <tr>
+            <td class="small">{{ analysis.created_at|date:"d M Y, g:i A" }}</td>
+            {% if not is_patient_role %}
+              <td>
+                {% if analysis.patient %}
+                  <a href="{% url 'accounts:patient_detail' analysis.patient.pk %}" class="text-decoration-none">
+                    {{ analysis.user.display_name }}
+                  </a>
+                {% else %}{{ analysis.user.display_name }}{% endif %}
+              </td>
+            {% endif %}
+            <td class="small">{{ analysis.symptom_labels|join:", "|default:"Free text"|truncatechars:60 }}</td>
+            <td>{{ analysis.pain_level }}/10</td>
+            <td><span class="badge bg-{{ analysis.urgency_css }}-subtle text-{{ analysis.urgency_css }}-emphasis">{{ analysis.urgency }}</span></td>
+            <td>
+              {% if analysis.reviewed_by_dentist %}
+                <i class="bi bi-check-circle text-success"></i>
+              {% else %}
+                <i class="bi bi-dash-circle text-body-secondary"></i>
+              {% endif %}
+            </td>
+            <td class="text-end"><a href="{% url 'aiassistant:symptom_detail' analysis.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">{% include "partials/empty_state.html" with icon="bi-clipboard2" message="No symptom checks recorded." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{% include "partials/pagination.html" %}</div>
+</div>
+{% endblock %}

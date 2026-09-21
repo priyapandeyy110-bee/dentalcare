@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Something went wrong{% endblock %}
+{% block main_class %}container py-5{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+  <h1 class="h3 mt-3">Something went wrong</h1>
+  <p class="text-body-secondary">
+    We hit an unexpected error. Please try again. If you need help urgently,
+    call the clinic on {{ CLINIC_PHONE }}.
+  </p>
+  <a href="/" class="btn btn-primary">Back to the start</a>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Reschedule {{ appointment.reference }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <h1 class="h4 mb-1">Reschedule appointment</h1>
+    <p class="text-body-secondary">
+      {{ appointment.reference }} &middot; currently
+      {{ appointment.scheduled_for|date:"l, d F Y" }} at {{ appointment.scheduled_for|time:"g:i A" }}
+      with {{ appointment.dentist.display_name }}.
+    </p>
+
+    <div class="card"><div class="card-body">
+      <form method="post" id="rescheduleForm" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+          </div>
+        {% endif %}
+
+        {% include "partials/form_field.html" with field=form.date %}
+
+        <div class="mb-3">
+          <label class="form-label">New time <span class="text-danger">*</span></label>
+          <div id="slotContainer" class="slot-grid">
+            {% for value, label in form.fields.slot.choices %}
+              <div class="slot-option">
+                <input type="radio" name="slot" id="slot_{{ forloop.counter }}" value="{{ value }}">
+                <label for="slot_{{ forloop.counter }}">{{ label }}</label>
+              </div>
+            {% endfor %}
+          </div>
+          <div id="slotMessage" class="form-text">Pick a date to see the available times.</div>
+          {% for error in form.slot.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Move appointment</button>
+        <a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-link">Cancel</a>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const dateField = document.getElementById("{{ form.date.id_for_label }}");
+  const container = document.getElementById("slotContainer");
+  const message = document.getElementById("slotMessage");
+  const slotsUrl = "{% url 'appointments:slots_api' %}";
+
+  async function loadSlots() {
+    if (!dateField.value) return;
+    container.innerHTML = "";
+    message.innerHTML = "<span class='spinner-border spinner-border-sm me-1'></span>Checking availability...";
+
+    const params = new URLSearchParams({
+      dentist: "{{ appointment.dentist.pk }}",
+      date: dateField.value,
+      exclude: "{{ appointment.pk }}",
+    });
+
+    try {
+      const response = await fetch(slotsUrl + "?" + params.toString());
+      const data = await response.json();
+      if (!data.slots.length) {
+        message.textContent = data.message || "No free slots that day.";
+        return;
+      }
+      message.textContent = data.slots.length + " times available.";
+      data.slots.forEach(function (slot, index) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "slot-option";
+        wrapper.innerHTML =
+          "<input type='radio' name='slot' id='slot_live_" + index + "' value='" + slot.value + "'>" +
+          "<label for='slot_live_" + index + "'>" + slot.label + "</label>";
+        container.appendChild(wrapper);
+      });
+    } catch (error) {
+      message.textContent = "Could not load the available times.";
+    }
+  }
+
+  dateField.addEventListener("change", loadSlots);
+})();
+</script>
+{% endblock %}

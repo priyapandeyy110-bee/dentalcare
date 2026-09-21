@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load dental_extras %}
+
+{% block title %}Schedule -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-0">{{ dentist.display_name }}</h1>
+    <div class="small text-body-secondary">{{ dentist.specialization }}</div>
+  </div>
+
+  <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+    {% if is_admin_role %}
+      <select name="dentist" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+        {% for item in all_dentists %}
+          <option value="{{ item.pk }}" {% if item.pk == dentist.pk %}selected{% endif %}>{{ item.display_name }}</option>
+        {% endfor %}
+      </select>
+    {% endif %}
+    <input type="date" name="date" value="{{ schedule.day|date:'Y-m-d' }}"
+           class="form-control form-control-sm" style="width:auto" onchange="this.form.submit()">
+  </form>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a href="?dentist={{ dentist.pk }}&date={{ prev_day|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-chevron-left"></i> Previous day
+  </a>
+  <div class="fw-semibold">
+    {{ schedule.day|date:"l, d F Y" }}
+    {% if schedule.day == today %}<span class="badge bg-primary ms-1">Today</span>{% endif %}
+  </div>
+  <a href="?dentist={{ dentist.pk }}&date={{ next_day|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
+    Next day <i class="bi bi-chevron-right"></i>
+  </a>
+</div>
+
+{% if schedule.on_leave %}
+  <div class="alert alert-warning">
+    <i class="bi bi-airplane me-1"></i>
+    {{ dentist.display_name }} is on leave on this date -- no slots are bookable.
+  </div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        Booked appointments ({{ schedule.appointments|length }})
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead><tr><th>Time</th><th>Patient</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for appointment in schedule.appointments %}
+              <tr>
+                <td class="fw-semibold text-nowrap">{{ appointment.scheduled_for|time:"g:i A" }}</td>
+                <td>
+                  <a href="{% url 'accounts:patient_detail' appointment.patient.pk %}" class="text-decoration-none">
+                    {{ appointment.patient.user.display_name }}
+                  </a>
+                  <div class="small text-body-secondary">{{ appointment.patient.user.phone }}</div>
+                  {% for flag in appointment.patient.risk_flags %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis">{{ flag }}</span>
+                  {% endfor %}
+                </td>
+                <td class="small">
+                  {{ appointment.get_reason_display }}
+                  {% if appointment.symptoms %}
+                    <div class="text-body-secondary">{{ appointment.symptoms|truncatewords:12 }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">
+                    {{ appointment.get_status_display }}
+                  </span>
+                </td>
+                <td class="text-end text-nowrap">
+                  <a href="{% url 'records:clinical_briefing' appointment.patient.pk %}?appointment={{ appointment.pk }}"
+                     class="btn btn-sm btn-outline-info" title="AI briefing"><i class="bi bi-robot"></i></a>
+                  <a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-body-secondary py-4">Nothing booked on this day.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Free slots ({{ schedule.free_slots|length }})</div>
+      <div class="card-body">
+        {% if schedule.free_slots %}
+          <div class="slot-grid">
+            {% for slot in schedule.free_slots %}
+              <a href="{% url 'appointments:book' %}?dentist={{ dentist.pk }}&date={{ schedule.day|date:'Y-m-d' }}"
+                 class="btn btn-sm btn-outline-primary">{{ slot|time:"g:i A" }}</a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-body-secondary mb-0 small">
+            {% if schedule.on_leave %}
+              On leave.
+            {% else %}
+              No free slots left on this day.
+            {% endif %}
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">Working hours</div>
+      <ul class="list-group list-group-flush">
+        {% for block in dentist.availabilities.all %}
+          {% if block.is_active %}
+            <li class="list-group-item d-flex justify-content-between small">
+              <span>{{ block.get_weekday_display }}</span>
+              <span>{{ block.start_time|time:"g:i A" }} &ndash; {{ block.end_time|time:"g:i A" }}</span>
+            </li>
+          {% endif %}
+        {% empty %}
+          <li class="list-group-item small text-body-secondary">No working hours set.</li>
+        {% endfor %}
+      </ul>
+      <div class="card-body">
+        <a href="{% url 'appointments:availability' %}?dentist={{ dentist.pk }}" class="btn btn-sm btn-outline-primary w-100">
+          Edit working hours
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

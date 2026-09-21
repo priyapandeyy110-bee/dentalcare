@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load dental_extras humanize %}
+
+{% block title %}Clinic dashboard -- {{ CLINIC_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h1 class="h4 mb-0">Clinic dashboard</h1>
+    <div class="small text-body-secondary">
+      AI engine: {{ provider_label }}
+      {% if not ai_live %}
+        <span class="badge bg-secondary-subtle text-secondary-emphasis">
+          Set ANTHROPIC_API_KEY to enable the Claude API
+        </span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'accounts:patient_create' %}" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>New patient</a>
+    <a href="{% url 'appointments:book' %}" class="btn btn-outline-primary"><i class="bi bi-calendar-plus me-1"></i>Book</a>
+    <a href="{% url 'core:reports' %}" class="btn btn-outline-secondary"><i class="bi bi-graph-up me-1"></i>Reports</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between">
+      <div><div class="stat-label">Patients</div><div class="stat-value">{{ stats.total_patients }}</div></div>
+      <i class="bi bi-people stat-icon"></i>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card stat-info h-100"><div class="card-body d-flex justify-content-between">
+      <div><div class="stat-label">Today</div><div class="stat-value">{{ stats.appointments_today }}</div>
+      <div class="small text-body-secondary">appointments</div></div>
+      <i class="bi bi-calendar-day stat-icon"></i>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card stat-warning h-100"><div class="card-body d-flex justify-content-between">
+      <div><div class="stat-label">Awaiting confirmation</div><div class="stat-value">{{ stats.appointments_pending }}</div></div>
+      <i class="bi bi-hourglass-split stat-icon"></i>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card stat-success h-100"><div class="card-body d-flex justify-content-between">
+      <div><div class="stat-label">Revenue this month</div><div class="stat-value">{{ stats.revenue_this_month|currency }}</div></div>
+      <i class="bi bi-cash-coin stat-icon"></i>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between">
+      <div><div class="stat-label">Dentists</div><div class="stat-value">{{ stats.total_dentists }}</div></div>
+      <i class="bi bi-person-badge stat-icon"></i>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between">
+      <div><div class="stat-label">Treatments this month</div><div class="stat-value">{{ stats.treatments_this_month }}</div></div>
+      <i class="bi bi-clipboard2-pulse stat-icon"></i>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card stat-danger h-100"><div class="card-body d-flex justify-content-between">
+      <div><div class="stat-label">Outstanding</div><div class="stat-value">{{ stats.outstanding|currency }}</div></div>
+      <i class="bi bi-receipt-cutoff stat-icon"></i>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card {% if stats.urgent_triage %}stat-danger{% else %}stat-success{% endif %} h-100">
+      <div class="card-body d-flex justify-content-between">
+        <div><div class="stat-label">Urgent AI triage</div><div class="stat-value">{{ stats.urgent_triage }}</div>
+        <div class="small text-body-secondary">{{ stats.ai_calls }} AI calls total</div></div>
+        <i class="bi bi-robot stat-icon"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if urgent_analyses %}
+<div class="card border-danger mb-4">
+  <div class="card-header bg-danger-subtle text-danger-emphasis">
+    <i class="bi bi-exclamation-triangle me-1"></i>
+    Patients flagged urgent by the symptom checker
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for analysis in urgent_analyses %}
+      <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <span class="badge bg-{{ analysis.urgency_css }}">{{ analysis.urgency }}</span>
+          <strong class="ms-1">{{ analysis.user.display_name }}</strong>
+          <div class="small text-body-secondary">
+            {{ analysis.summary|truncatewords:22 }}
+          </div>
+          <div class="small text-body-secondary">{{ analysis.created_at|naturaltime }}</div>
+        </div>
+        <a href="{% url 'aiassistant:symptom_detail' analysis.pk %}" class="btn btn-sm btn-danger">Review</a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Today's schedule</span>
+        <a href="{% url 'appointments:schedule' %}" class="small">Full diary</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead><tr><th>Time</th><th>Patient</th><th>Dentist</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for appointment in todays_appointments %}
+              <tr>
+                <td class="fw-semibold">{{ appointment.scheduled_for|time:"g:i A" }}</td>
+                <td>
+                  <a href="{% url 'accounts:patient_detail' appointment.patient.pk %}" class="text-decoration-none">
+                    {{ appointment.patient.user.display_name }}
+                  </a>
+                </td>
+                <td class="small">{{ appointment.dentist.display_name }}</td>
+                <td class="small">{{ appointment.get_reason_display }}</td>
+                <td><span class="badge bg-{{ appointment.status_css }}-subtle text-{{ appointment.status_css }}-emphasis">{{ appointment.get_status_display }}</span></td>
+                <td class="text-end"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center text-body-secondary py-4">Nothing booked for today.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Waiting for confirmation</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead><tr><th>When</th><th>Patient</th><th>Dentist</th><th></th></tr></thead>
+          <tbody>
+            {% for appointment in pending_appointments %}
+              <tr>
+                <td>{{ appointment.scheduled_for|date:"d M, g:i A" }}</td>
+                <td>{{ appointment.patient.user.display_name }}</td>
+                <td class="small">{{ appointment.dentist.display_name }}</td>
+                <td class="text-end"><a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-sm btn-primary">Confirm</a></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center text-body-secondary py-4">Everything is confirmed.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Newest patients</span>
+        <a href="{% url 'accounts:patient_list' %}" class="small">All patients</a>
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for patient in recent_patients %}
+          <li class="list-group-item d-flex align-items-center gap-3">
+            <span class="avatar-initials avatar-muted">{{ patient.user.initials }}</span>
+            <div class="flex-grow-1">
+              <a href="{% url 'accounts:patient_detail' patient.pk %}" class="text-decoration-none fw-semibold">
+                {{ patient.user.display_name }}
+              </a>
+              <div class="small text-body-secondary">
+                {{ patient.patient_code }} &middot; {{ patient.user.phone|default:"no phone" }}
+              </div>
+            </div>
+            {% if patient.risk_flags %}
+              <i class="bi bi-exclamation-triangle text-warning" title="{{ patient.risk_flags|join:', ' }}"></i>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="list-group-item text-center text-body-secondary py-4">No patients yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Quick actions</div>
+      <div class="list-group list-group-flush">
+        <a href="{% url 'accounts:patient_create' %}" class="list-group-item list-group-item-action">
+          <i class="bi bi-person-plus me-2"></i>Register a walk-in patient
+        </a>
+        <a href="{% url 'accounts:staff_create' %}" class="list-group-item list-group-item-action">
+          <i class="bi bi-person-badge me-2"></i>Add a dentist or administrator
+        </a>
+        <a href="{% url 'appointments:availability' %}" class="list-group-item list-group-item-action">
+          <i class="bi bi-clock me-2"></i>Set working hours and leave
+        </a>
+        <a href="{% url 'billing:list' %}" class="list-group-item list-group-item-action">
+          <i class="bi bi-receipt me-2"></i>Invoices and payments
+        </a>
+        <a href="{% url 'aiassistant:ai_logs' %}" class="list-group-item list-group-item-action">
+          <i class="bi bi-robot me-2"></i>AI usage and cost log
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

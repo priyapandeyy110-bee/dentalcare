@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Access denied{% endblock %}
+{% block main_class %}container py-5{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-shield-lock fs-1 text-danger"></i>
+  <h1 class="h3 mt-3">Access denied</h1>
+  <p class="text-body-secondary">
+    Your role does not have permission to view this page. If you think this is a
+    mistake, contact the clinic administrator.
+  </p>
+  <a href="{% url 'core:dashboard' %}" class="btn btn-primary">Back to my dashboard</a>
+</div>
+{% endblock %}

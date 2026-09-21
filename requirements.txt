@@ -1,0 +1,17 @@
+Django==5.2.17
+djangorestframework==3.18.0
+dj-database-url==3.1.2
+python-dotenv==1.2.3
+whitenoise==6.12.0
+anthropic==1.7.0
+
+# Production server + PostgreSQL driver (used on Render)
+gunicorn==23.0.0
+psycopg[binary]==3.2.3
+
+# Optional database drivers -- install the one you need
+# mysqlclient==2.2.7
+
+# Development / testing
+pytest==9.1.1
+pytest-django==4.14.0
